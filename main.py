@@ -14,6 +14,8 @@ from tkinter import ttk, scrolledtext, messagebox
 import threading
 import queue
 import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 class VoiceAnalyzer:
     def __init__(self):
@@ -90,6 +92,8 @@ class VoiceAnalyzer:
         transcription = self.transcribe_audio(audio_file)
 
         analysis = {
+            'audio': y,
+            'sample_rate': sr,
             'transcription': transcription,
             'pitch': self._analyze_pitch(sound),
             'prosody': self._analyze_prosody(sound, y, sr),
@@ -307,7 +311,7 @@ class VoiceAnalyzerGUI:
         self.audio_file = None
 
         master.title("Voice Analysis Tool")
-        master.geometry("800x600")
+        master.geometry("1200x800")
 
         # Configure styles
         self.style = ttk.Style()
@@ -345,8 +349,13 @@ class VoiceAnalyzerGUI:
         results_frame = ttk.Frame(main_frame)
         results_frame.pack(fill=tk.BOTH, expand=True)
 
+        # Text results
         self.results_text = scrolledtext.ScrolledText(results_frame, wrap=tk.WORD, font=('Helvetica', 12))
-        self.results_text.pack(fill=tk.BOTH, expand=True)
+        self.results_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+
+        # Graph display area
+        self.graph_frame = ttk.Frame(results_frame)
+        self.graph_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
 
         # Status bar
         self.status_var = tk.StringVar()
@@ -420,14 +429,14 @@ class VoiceAnalyzerGUI:
             )
 
             # Update UI
-            self.master.after(0, self.update_results, feedback, response.text)
+            self.master.after(0, self.update_results, analysis, feedback, response.text)
         except Exception as e:
             self.master.after(0, self.show_error, str(e))
         finally:
             if self.audio_file and os.path.exists(self.audio_file):
                 os.remove(self.audio_file)
 
-    def update_results(self, feedback, recommendations):
+    def update_results(self, analysis, feedback, recommendations):
         self.results_text.delete(1.0, tk.END)
         self.results_text.insert(tk.END, "Analysis Results:\n\n")
         self.results_text.insert(tk.END, feedback)
@@ -437,6 +446,47 @@ class VoiceAnalyzerGUI:
         self.status_var.set("Analysis complete")
         self.record_btn.config(state=tk.NORMAL)
         self.analyze_btn.config(state=tk.NORMAL)
+
+        # Plot graphs
+        self.plot_graphs(analysis['audio'], analysis['sample_rate'])
+
+    def plot_graphs(self, audio, sample_rate):
+        # Clear previous graphs
+        for widget in self.graph_frame.winfo_children():
+            widget.destroy()
+
+        # Time axis
+        time = np.arange(0, len(audio)) / sample_rate
+
+        # Create figure and subplots
+        fig, axs = plt.subplots(3, 1, figsize=(8, 8))
+
+        # Plot waveform
+        axs[0].plot(time, audio)
+        axs[0].set_title('Waveform')
+        axs[0].set_xlabel('Time (s)')
+        axs[0].set_ylabel('Amplitude')
+
+        # Plot spectrogram
+        D = librosa.amplitude_to_db(np.abs(librosa.stft(audio)), ref=np.max)
+        librosa.display.specshow(D, sr=sample_rate, x_axis='time', y_axis='log', ax=axs[1])
+        axs[1].set_title('Spectrogram')
+
+        # Plot spectral centroid
+        spectral_centroids = librosa.feature.spectral_centroid(y=audio, sr=sample_rate)[0]
+        axs[2].plot(time[:len(spectral_centroids)], spectral_centroids)
+        axs[2].set_title('Spectral Centroid')
+        axs[2].set_xlabel('Time (s)')
+        axs[2].set_ylabel('Frequency (Hz)')
+
+        # Adjust layout
+        plt.tight_layout()
+
+        # Embed plot in Tkinter window
+        canvas = FigureCanvasTkAgg(fig, master=self.graph_frame)
+        canvas_widget = canvas.get_tk_widget()
+        canvas_widget.pack(fill=tk.BOTH, expand=True)
+        canvas.draw()
 
     def show_error(self, message):
         messagebox.showerror("Error", message)
