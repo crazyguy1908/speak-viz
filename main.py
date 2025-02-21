@@ -1,5 +1,4 @@
 import sounddevice as sd
-import numpy as np
 import librosa
 import parselmouth
 import soundfile as sf
