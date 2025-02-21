@@ -10,6 +10,11 @@ import threading
 import queue
 from google import genai
 from scipy.stats import skew, kurtosis
+import tkinter as tk
+from tkinter import ttk, scrolledtext, messagebox
+import threading
+import queue
+import numpy as np
 
 class VoiceAnalyzer:
     def __init__(self):
@@ -295,39 +300,160 @@ class VoiceAnalyzer:
 
         return "\n".join(feedback)
 
+class VoiceAnalyzerGUI:
+    def __init__(self, master, analyzer):
+        self.master = master
+        self.analyzer = analyzer
+        self.recording = None
+        self.audio_file = None
+
+        master.title("Voice Analysis Tool")
+        master.geometry("800x600")
+
+        # Configure styles
+        self.style = ttk.Style()
+        self.style.configure('TButton', font=('Helvetica', 12))
+        self.style.configure('Header.TLabel', font=('Helvetica', 14, 'bold'))
+
+        # Create GUI elements
+        self.create_widgets()
+
+        # Recording control
+        self.is_recording = False
+        self.stop_event = threading.Event()
+        self.audio_queue = queue.Queue()
+
+    def create_widgets(self):
+        # Main container
+        main_frame = ttk.Frame(self.master)
+        main_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=20)
+
+        # Header
+        header = ttk.Label(main_frame, text="Voice Analysis Tool", style='Header.TLabel')
+        header.pack(pady=10)
+
+        # Control buttons
+        btn_frame = ttk.Frame(main_frame)
+        btn_frame.pack(pady=10)
+
+        self.record_btn = ttk.Button(btn_frame, text="Start Recording", command=self.toggle_recording)
+        self.record_btn.pack(side=tk.LEFT, padx=5)
+
+        self.analyze_btn = ttk.Button(btn_frame, text="Analyze", command=self.start_analysis, state=tk.DISABLED)
+        self.analyze_btn.pack(side=tk.LEFT, padx=5)
+
+        # Results display
+        results_frame = ttk.Frame(main_frame)
+        results_frame.pack(fill=tk.BOTH, expand=True)
+
+        self.results_text = scrolledtext.ScrolledText(results_frame, wrap=tk.WORD, font=('Helvetica', 12))
+        self.results_text.pack(fill=tk.BOTH, expand=True)
+
+        # Status bar
+        self.status_var = tk.StringVar()
+        self.status_bar = ttk.Label(main_frame, textvariable=self.status_var)
+        self.status_bar.pack(fill=tk.X)
+
+    def toggle_recording(self):
+        if not self.is_recording:
+            self.start_recording()
+        else:
+            self.stop_recording()
+
+    def start_recording(self):
+        self.is_recording = True
+        self.record_btn.config(text="Stop Recording")
+        self.analyze_btn.config(state=tk.DISABLED)
+        self.status_var.set("Recording... Press the Stop button to end recording")
+        self.results_text.delete(1.0, tk.END)
+
+        # Start recording in a separate thread
+        self.stop_event.clear()
+        threading.Thread(target=self.record_audio, daemon=True).start()
+
+    def stop_recording(self):
+        self.is_recording = False
+        self.stop_event.set()
+        self.record_btn.config(text="Start Recording")
+        self.status_var.set("Recording stopped. Ready to analyze.")
+        self.analyze_btn.config(state=tk.NORMAL)
+
+    def record_audio(self):
+        def audio_callback(indata, frames, time, status):
+            if status:
+                print(status)
+            self.audio_queue.put(indata.copy())
+
+        with sd.InputStream(samplerate=self.analyzer.sample_rate,
+                           channels=self.analyzer.channels,
+                           callback=audio_callback):
+            while not self.stop_event.is_set():
+                sd.sleep(100)
+
+        # Combine audio chunks
+        audio_chunks = []
+        while not self.audio_queue.empty():
+            audio_chunks.append(self.audio_queue.get())
+
+        if audio_chunks:
+            self.recording = np.concatenate(audio_chunks)
+            self.audio_file = self.analyzer.save_audio(self.recording)
+
+    def start_analysis(self):
+        self.results_text.delete(1.0, tk.END)
+        self.results_text.insert(tk.END, "Analyzing... Please wait...\n")
+        self.status_var.set("Analyzing audio...")
+        self.record_btn.config(state=tk.DISABLED)
+        self.analyze_btn.config(state=tk.DISABLED)
+
+        threading.Thread(target=self.run_analysis, daemon=True).start()
+
+    def run_analysis(self):
+        try:
+            analysis = self.analyzer.analyze_audio(self.audio_file)
+            feedback = self.analyzer.generate_feedback(analysis)
+
+            # Get Gemini recommendations
+            client = genai.Client(api_key="AIzaSyB_s_ZvM4IC7EPnphOWN5lfmnkuNBPhuag")
+            response = client.models.generate_content(
+                model="gemini-2.0-flash",
+                contents=feedback + "based on this feedback and the transcript give 5 lines of recommendations to the speaker for improving their speech"
+            )
+
+            # Update UI
+            self.master.after(0, self.update_results, feedback, response.text)
+        except Exception as e:
+            self.master.after(0, self.show_error, str(e))
+        finally:
+            if self.audio_file and os.path.exists(self.audio_file):
+                os.remove(self.audio_file)
+
+    def update_results(self, feedback, recommendations):
+        self.results_text.delete(1.0, tk.END)
+        self.results_text.insert(tk.END, "Analysis Results:\n\n")
+        self.results_text.insert(tk.END, feedback)
+        self.results_text.insert(tk.END, "\n\nRecommendations:\n\n")
+        self.results_text.insert(tk.END, recommendations)
+
+        self.status_var.set("Analysis complete")
+        self.record_btn.config(state=tk.NORMAL)
+        self.analyze_btn.config(state=tk.NORMAL)
+
+    def show_error(self, message):
+        messagebox.showerror("Error", message)
+        self.status_var.set("Error occurred")
+        self.record_btn.config(state=tk.NORMAL)
+        self.analyze_btn.config(state=tk.NORMAL)
+
+
 def main():
+    # Initialize the voice analyzer
     analyzer = VoiceAnalyzer()
 
-    # Record audio
-    recording = analyzer.record_audio()
-
-    if len(recording) == 0:
-        print("No audio recorded!")
-        return
-
-    # Save recording
-    audio_file = analyzer.save_audio(recording)
-
-    try:
-        # Analyze audio
-        analysis = analyzer.analyze_audio(audio_file)
-
-        # Generate feedback
-        feedback = analyzer.generate_feedback(analysis)
-        print("\nAnalysis Results:")
-        print(feedback)
-        client = genai.Client(api_key="AIzaSyB_s_ZvM4IC7EPnphOWN5lfmnkuNBPhuag")
-        response = client.models.generate_content(
-            model="gemini-2.0-flash", contents=feedback + "based on this feedback and the transcript give 5 lines of reccomendations to the speaker for improving thier speech"
-        )
-        print(response.text)
-
-
-    finally:
-        # Clean up the audio file
-        if os.path.exists(audio_file):
-            os.remove(audio_file)
-            print(f"\nCleaned up temporary file: {audio_file}")
+    # Create the GUI
+    root = tk.Tk()
+    app = VoiceAnalyzerGUI(root, analyzer)
+    root.mainloop()
 
 if __name__ == "__main__":
     main()
