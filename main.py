@@ -5,8 +5,6 @@ import soundfile as sf
 from datetime import datetime
 import whisper
 import os
-import threading
-import queue
 from google import genai
 from scipy.stats import skew, kurtosis
 import tkinter as tk
