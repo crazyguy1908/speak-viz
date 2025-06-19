@@ -1,13 +1,15 @@
-import Recorder from './Recorder.js';
+import Recorder from "./Recorder.js";
 
 function page() {
   return (
-
     <div>
-      <Recorder />
+      <Recorder
+        videorender={({ previewStream }) => {
+          return <VideoPreview stream={previewStream} />;
+        }}
+      />
     </div>
-
-  )
+  );
 }
 
 export default page;
