@@ -93,7 +93,6 @@ async function analyzeRemoteWebm(url) {
     });
 
     if (!response.ok) {
-      // Server returned a 4xx/5xx status
       const error = await response.json();
       throw new Error(`API error: ${error.detail || response.status}`);
     }
