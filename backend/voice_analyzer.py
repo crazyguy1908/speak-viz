@@ -7,12 +7,6 @@ import whisper
 import os
 import sys
 import time # Keep for sd.sleep in record_audio
-# NOTE: Replace with your actual API key handling (e.g., environment variable)
-# It's insecure to hardcode API keys directly in the source code.
-# For demonstration purposes only:
-# os.environ['GOOGLE_API_KEY'] = "AIzaSyB_s_ZvM4IC7EPnphOWN5lfmnkuNBPhuag" # <<< --- REPLACE WITH YOUR ACTUAL GOOGLE API KEY --- >>>
-# Using environment variable is preferred: export GOOGLE_API_KEY='YOUR_API_KEY'
-
 from google.api_core.exceptions import PermissionDenied
 # Correct import based on diagnostic errors and typical usage
 import google.generativeai as genai
