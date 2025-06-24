@@ -5,10 +5,16 @@ import os
 import uuid
 import subprocess
 import httpx
-
+from fastapi.middleware.cors import CORSMiddleware
 from voice_analyzer import VoiceAnalyzer
 
 app = FastAPI(title="Voice Analysis API")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],            # e.g. ["http://localhost:3000"]
+    allow_methods=["POST", "OPTIONS"],
+    allow_headers=["*"],
+)
 enhancer = VoiceAnalyzer()
 
 UPLOAD_DIR = "./uploads"
