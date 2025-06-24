@@ -19,10 +19,7 @@ class AnalyzeRequest(BaseModel):
 
 @app.post("/analyze")
 async def analyze_audio(req: AnalyzeRequest):
-    # only allow .webm URLs
-    if not req.url.path.lower().endswith(".webm"):
-        raise HTTPException(status_code=400, detail="URL must point to a .webm file")
-
+    # only allow .webm URLsxx
     base_id = uuid.uuid4().hex
     webm_path = os.path.join(UPLOAD_DIR, f"{base_id}.webm")
     wav_path = os.path.join(UPLOAD_DIR, f"{base_id}.wav")
