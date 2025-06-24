@@ -29,7 +29,7 @@ function Recorder() {
     link.download = fileName;
     document.body.appendChild(link);
     link.click();
-    analyzeRemoteWebm(link.href);
+    analyzeRemoteWebm(blobUrl);
   };
 
   return (
@@ -58,7 +58,7 @@ function Recorder() {
                 <button
                   className="stop-button"
                   onClick={stopRecording}
-                  disabled={status == "idle" || "stopped" ? true : false}
+                  disabled={status == "idle" ? true : false}
                 >
                   Stop Recording
                 </button>
