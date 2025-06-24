@@ -1,41 +1,44 @@
-from fastapi import FastAPI, File, UploadFile, HTTPException
+from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse
+from pydantic import BaseModel, HttpUrl
 import os
 import uuid
 import subprocess
+import httpx
 
 from voice_analyzer import VoiceAnalyzer
 
-app = FastAPI(
-    title="Voice Analysis API",
-)
-
+app = FastAPI(title="Voice Analysis API")
 enhancer = VoiceAnalyzer()
 
 UPLOAD_DIR = "./uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-@app.post("/analyze")
-async def analyze_audio(file: UploadFile = File(...)):
-    # Ensure .webm upload
-    if not file.filename.lower().endswith(".webm"):
-        raise HTTPException(status_code=400, detail="Only .webm files are supported")
+class AnalyzeRequest(BaseModel):
+    url: HttpUrl  # ensures we get a valid URL
 
-    # Generate unique filenames
+@app.post("/analyze")
+async def analyze_audio(req: AnalyzeRequest):
+    # only allow .webm URLs
+    if not req.url.path.lower().endswith(".webm"):
+        raise HTTPException(status_code=400, detail="URL must point to a .webm file")
+
     base_id = uuid.uuid4().hex
     webm_path = os.path.join(UPLOAD_DIR, f"{base_id}.webm")
     wav_path = os.path.join(UPLOAD_DIR, f"{base_id}.wav")
 
-    # Save the uploaded .webm
+    # 1) Download the remote file
     try:
-        with open(webm_path, "wb") as out_file:
-            out_file.write(await file.read())
+        async with httpx.AsyncClient() as client:
+            resp = await client.get(str(req.url))
+            resp.raise_for_status()
+        with open(webm_path, "wb") as f:
+            f.write(resp.content)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to write .webm file: {e}")
-    finally:
-        await file.close()
+        # Could refine on HTTP vs filesystem errors
+        raise HTTPException(status_code=502, detail=f"Failed to download .webm: {e}")
 
-    # Convert .webm to .wav via ffmpeg
+    # 2) Convert .webm → .wav
     try:
         subprocess.run(
             ["ffmpeg", "-y", "-i", webm_path, "-ar", "16000", "-ac", "1", wav_path],
@@ -44,11 +47,10 @@ async def analyze_audio(file: UploadFile = File(...)):
             stderr=subprocess.DEVNULL
         )
     except subprocess.CalledProcessError as e:
-        # Clean up and report
         os.remove(webm_path)
         raise HTTPException(status_code=500, detail=f"FFmpeg conversion failed: {e}")
 
-    # Analysis and cleanup
+    # 3) Analyze & clean up
     try:
         analysis = enhancer.analyze_audio(wav_path)
         feedback = enhancer.generate_feedback(analysis)
@@ -56,10 +58,9 @@ async def analyze_audio(file: UploadFile = File(...)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Analysis error: {e}")
     finally:
-        # Always clean up both files
-        for path in (webm_path, wav_path):
-            if os.path.exists(path):
-                os.remove(path)
+        for p in (webm_path, wav_path):
+            if os.path.exists(p):
+                os.remove(p)
 
     return JSONResponse({
         "analysis": analysis,
@@ -70,4 +71,6 @@ async def analyze_audio(file: UploadFile = File(...)):
 
 @app.get("/")
 async def root():
-    return {"message": "POST /analyze with a .webm file."}
+    return {
+        "message": "POST /analyze with JSON: { \"url\": \"https://…/audio.webm\" }"
+    }
