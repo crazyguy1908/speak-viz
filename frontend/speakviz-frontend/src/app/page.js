@@ -1,3 +1,5 @@
+'use server'
+
 import Recorder from "./Recorder.js";
 
 function page() {
