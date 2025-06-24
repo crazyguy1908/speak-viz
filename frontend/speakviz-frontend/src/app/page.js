@@ -3,11 +3,7 @@ import Recorder from "./Recorder.js";
 function page() {
   return (
     <div>
-      <Recorder
-        videorender={({ previewStream }) => {
-          return <VideoPreview stream={previewStream} />;
-        }}
-      />
+      <Recorder />
     </div>
   );
 }
