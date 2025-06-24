@@ -69,7 +69,7 @@ function Recorder() {
     link.download = fileName;
     document.body.appendChild(link);
     link.click();
-    link.remove();
+    analyzeRemoteWebm(link.href);
   };
 
   return (
