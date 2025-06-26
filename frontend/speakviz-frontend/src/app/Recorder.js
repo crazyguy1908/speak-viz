@@ -2,41 +2,68 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { ReactMediaRecorder } from "react-media-recorder";
-import * as faceapi from 'face-api.js';
+import * as faceapi from "face-api.js";
 const API_URL = "http://localhost:8000/analyze";
 
 function Recorder() {
-
   const [idleStream, setIdleStream] = useState(null);
+  const [analysis, setAnalysis] = useState("");
+  const [feedback, setFeedback] = useState("");
+  const [recommendations, setRecommendations] = useState("");
+  async function analyzeWebmBlob(blob) {
+    const formData = new FormData();
+    formData.append("file", blob, "recording.webm");
 
+    try {
+      const resp = await fetch(API_URL, {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!resp.ok) {
+        // server-side error or CORS; dump the text for debugging
+        const text = await resp.text();
+        throw new Error(`Server responded ${resp.status}: ${text}`);
+      }
+
+      // parse the JSON _from this same response_
+      const data = await resp.json();
+      console.log("Analysis:", data.analysis);
+      console.log("Feedback:", data.feedback);
+      console.log("Recommendations:", data.recommendations);
+      setAnalysis(data.analysis);
+      setFeedback(data.feedback);
+      setRecommendations(data.recommendations);
+    } catch (err) {
+      console.error("analyzeWebmBlob error:", err);
+    }
+  }
   const VideoPreview = ({ stream, className, detect }) => {
     const videoRef = useRef(null);
     const canvasRef = useRef(null);
-
 
     const [modelsLoaded, setModelsLoaded] = useState(false);
 
     useEffect(() => {
       const loadModels = async () => {
         await Promise.all([
-          faceapi.nets.tinyFaceDetector.loadFromUri('/models/tiny_face_detector'),
-          faceapi.nets.faceLandmark68Net.loadFromUri('/models/face_landmark_68'),
-          faceapi.nets.faceExpressionNet.loadFromUri('/models/face_expression')
-
+          faceapi.nets.tinyFaceDetector.loadFromUri(
+            "/models/tiny_face_detector",
+          ),
+          faceapi.nets.faceLandmark68Net.loadFromUri(
+            "/models/face_landmark_68",
+          ),
+          faceapi.nets.faceExpressionNet.loadFromUri("/models/face_expression"),
         ]);
         setModelsLoaded(true);
-      }
+      };
 
       loadModels();
     }, []);
 
-
-    
-
     useEffect(() => {
-
       if (!modelsLoaded) return;
-      
+
       if (videoRef.current && stream) {
         videoRef.current.srcObject = stream;
       }
@@ -45,7 +72,7 @@ function Recorder() {
 
       const startVideo = () => {
         if (videoRef.current && stream) {
-          videoRef.current.srcObject = stream
+          videoRef.current.srcObject = stream;
         }
       };
 
@@ -66,39 +93,42 @@ function Recorder() {
         faceapi.matchDimensions(canvas, displaySize);
 
         setInterval(async () => {
-          const detections = await faceapi 
+          const detections = await faceapi
             .detectAllFaces(video, new faceapi.TinyFaceDetectorOptions())
             .withFaceLandmarks()
-            .withFaceExpressions()
+            .withFaceExpressions();
 
           console.log(detections);
 
           const resizedDetections = faceapi.resizeResults(
             detections,
-            displaySize
+            displaySize,
           );
 
-          canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+          canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
           faceapi.draw.drawDetections(canvas, resizedDetections);
           faceapi.draw.drawFaceLandmarks(canvas, resizedDetections);
           faceapi.draw.drawFaceExpressions(canvas, resizedDetections);
-        }, 100)
+        }, 100);
       };
 
       startVideo();
       const vid = videoRef.current;
       if (!vid) return;
-      vid.addEventListener('loadedmetadata', detectFace, { once: true });
+      vid.addEventListener("loadedmetadata", detectFace, { once: true });
 
-      return () => vid.removeEventListener('loadedmetadata', detectFace);
+      return () => vid.removeEventListener("loadedmetadata", detectFace);
     }, [modelsLoaded, stream, detect]);
     if (!stream) {
       return null;
     }
     return (
-      <div style={{position: 'relative'}}>
+      <div style={{ position: "relative" }}>
         <video className={className} ref={videoRef} autoPlay muted />
-        <canvas ref={canvasRef} style={{position: 'absolute', inset: 0, pointerEvents: 'none'}}/>
+        <canvas
+          ref={canvasRef}
+          style={{ position: "absolute", inset: 0, pointerEvents: "none" }}
+        />
       </div>
     );
   };
@@ -120,9 +150,9 @@ function Recorder() {
     navigator.mediaDevices
       .getUserMedia({ video: true })
       .then(setIdleStream)
-      .catch(console.error)
+      .catch(console.error);
 
-    return () => idleStream?.getTracks().forEach(t => t.stop());
+    return () => idleStream?.getTracks().forEach((t) => t.stop());
   }, []);
 
   return (
@@ -165,27 +195,38 @@ function Recorder() {
                   loop
                 />
               ) : (
-                <VideoPreview className={status === "idle" ? "video-player" : "video-preview-player"} stream={status === 'idle' ? idleStream : previewStream} detect={status === 'recording'}/>
+                <VideoPreview
+                  className={
+                    status === "idle" ? "video-player" : "video-preview-player"
+                  }
+                  stream={status === "idle" ? idleStream : previewStream}
+                  detect={status === "recording"}
+                />
               )}
             </div>
           )}
         />
       </div>
+      <div>
+        {(feedback || recommendations) && (
+          <div className="analysis-result" style={{ marginTop: 20 }}>
+            {feedback && (
+              <>
+                <h3>Feedback</h3>
+                <p>{feedback}</p>
+              </>
+            )}
+            {recommendations && (
+              <>
+                <h3>Recommendations</h3>
+                <p>{recommendations}</p>
+              </>
+            )}
+          </div>
+        )}
+      </div>
     </>
   );
-}
-
-async function analyzeWebmBlob(blob) {
-  const formData = new FormData();
-  formData.append("file", blob, "recording.webm");
-
-  const resp = await fetch(API_URL, { method: "POST", body: formData });
-  if (!resp.ok) throw new Error(await resp.text());
-
-  const data = await fetch(resp.json)
-  console.log("Analysis:", data.analysis);
-  console.log("Feedback:", data.feedback);
-  console.log("Recommendations:", data.recommendations);
 }
 
 export default Recorder;
