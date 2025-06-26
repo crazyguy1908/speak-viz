@@ -80,7 +80,7 @@ class VoiceAnalyzer:
             'transcription': transcription,
             'pitch': self._analyze_pitch(sound),
             'prosody': self._analyze_prosody(sound, y, sr),
-            'speed': self._analyze_speed(y, sr),
+            'speed': self._analyze_speed(y, sr, transcription),
             'pauses': self._analyze_pauses(y, sr),
             'tone': self._analyze_tone(y, sr)
         }
@@ -176,7 +176,7 @@ class VoiceAnalyzer:
              print(f"Error analyzing prosody: {e}")
              return {'intensity': {}, 'intonation': {}, 'rhythm': {}}
 
-    def _analyze_speed(self, y, sr):
+    def _analyze_speed(self, y, sr, transcription=None):
         try:
             if not np.issubdtype(y.dtype, np.floating):
                  y = y.astype(np.float32)
@@ -184,8 +184,18 @@ class VoiceAnalyzer:
             onsets = librosa.onset.onset_detect(onset_envelope=onset_env, sr=sr, hop_length=512, units='time')
 
             duration = len(y) / sr
-            estimated_wpm = len(onsets) * (60 / duration) if duration > 0 else 0
-            return {'estimated_wpm_onsets': float(estimated_wpm), 'onset_count': int(len(onsets))} # Name changed for clarity
+
+            if transcription:
+                words = [w for w in transcription.split() if w.isalpha()]
+                estimated_wpm = len(words) * (60 / duration)
+                method = "transcription"
+                raw_count = len(words)
+            else: 
+                estimated_wpm = len(onsets) * (60 / duration) if duration > 0 else 0
+                method = "onsets"
+                raw_count = len(onsets)
+
+            return {'estimated_wpm': float(estimated_wpm), 'raw_count': int(raw_count)} # Name changed for clarity
         except Exception as e:
             print(f"Error analyzing speed: {e}")
             return {'estimated_wpm_onsets': 0.0, 'onset_count': 0}
@@ -334,16 +344,16 @@ class VoiceAnalyzer:
         speed = analysis.get('speed', {})
         feedback_parts.append("--- Speaking Rate ---")
         if speed:
-            wpm = speed.get('estimated_wpm_onsets', 0) # Use the updated key
+            wpm = speed.get('estimated_wpm', 0) 
+            count = speed.get('raw_count', 0)
             speed_desc = 'undetermined'
             if wpm > 0:
                  if wpm < 120: speed_desc = 'slow'
                  elif wpm < 160: speed_desc = 'moderate'
                  else: speed_desc = 'fast'
 
-            feedback_parts.append(f"- Estimated: {wpm:.0f} 'words' per minute ({speed_desc})") # Label WPM estimate source
-            feedback_parts.append(f"- Detected Vocal Onsets (approx. syllables/words): {speed.get('onset_count', 0)}")
-            feedback_parts.append("(Note: WPM is an estimate based on detecting vocalizations, not actual words from transcription.)")
+            feedback_parts.append(f"- Estimated: {wpm:.0f} 'words' per minute ({speed_desc})") 
+            feedback_parts.append(f"- Word count: {count}")
         else:
              feedback_parts.append("- Could not reliably analyze speaking rate.")
         feedback_parts.append("")
