@@ -388,7 +388,7 @@ class VoiceAnalyzer:
 
     def get_gemini_recommendations(self, feedback_text):
         """ Get recommendations from Gemini based on the feedback text. """
-        api_key = os.getenv("GOOGLE_API_KEY")
+        api_key = "AIzaSyA4j6MyrkAuGqf8cf0dbNnfXYgz75GDq1g"
         if not api_key:
             # print("GOOGLE_API_KEY environment variable not set.")
             return "Gemini recommendations unavailable (API key missing)."
@@ -397,7 +397,8 @@ class VoiceAnalyzer:
             # genai.configure(api_key=api_key) # Use genai.GenerativeModel directly with api_key
             # Use a model known for generation tasks, like gemini-1.5-flash
             # Ensure the model name is correct and available for your key
-            model = genai.GenerativeModel('gemini-1.5-flash', api_key=api_key) # Pass api_key here
+            genai.configure(api_key="AIzaSyA4j6MyrkAuGqf8cf0dbNnfXYgz75GDq1g")
+            model = genai.GenerativeModel('gemini-1.5-flash') # Pass api_key here
 
             prompt = (
                 f"Analyze the following voice analysis feedback and provide 5 concise, actionable recommendations "
