@@ -2,22 +2,102 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { ReactMediaRecorder } from "react-media-recorder";
+import * as faceapi from 'face-api.js';
 const API_URL = "http://localhost:8000/analyze";
 
 function Recorder() {
-  const VideoPreview = ({ stream }) => {
+
+  const [idleStream, setIdleStream] = useState(null);
+
+  const VideoPreview = ({ stream, className, detect }) => {
     const videoRef = useRef(null);
+    const canvasRef = useRef(null);
+
+
+    const [modelsLoaded, setModelsLoaded] = useState(false);
 
     useEffect(() => {
+      const loadModels = async () => {
+        await Promise.all([
+          faceapi.nets.tinyFaceDetector.loadFromUri('/models/tiny_face_detector'),
+          faceapi.nets.faceLandmark68Net.loadFromUri('/models/face_landmark_68'),
+          faceapi.nets.faceExpressionNet.loadFromUri('/models/face_expression')
+
+        ]);
+        setModelsLoaded(true);
+      }
+
+      loadModels();
+    }, []);
+
+
+    
+
+    useEffect(() => {
+
+      if (!modelsLoaded) return;
+      
       if (videoRef.current && stream) {
         videoRef.current.srcObject = stream;
       }
-    }, [stream]);
+
+      if (!detect) return;
+
+      const startVideo = () => {
+        if (videoRef.current && stream) {
+          videoRef.current.srcObject = stream
+        }
+      };
+
+      const detectFace = async () => {
+        const video = videoRef.current;
+        const canvas = canvasRef.current;
+
+        if (!video || !canvas) return;
+
+        const w = video.clientWidth;
+        const h = video.clientHeight;
+        if (!w || !h) return;
+        const displaySize = { width: w, height: h };
+
+        canvas.width = w;
+        canvas.height = h;
+
+        faceapi.matchDimensions(canvas, displaySize);
+
+        setInterval(async () => {
+          const detections = await faceapi 
+            .detectAllFaces(video, new faceapi.TinyFaceDetectorOptions())
+            .withFaceLandmarks()
+
+          console.log(detections);
+
+          const resizedDetections = faceapi.resizeResults(
+            detections,
+            displaySize
+          );
+
+          canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+          faceapi.draw.drawDetections(canvas, resizedDetections);
+          faceapi.draw.drawFaceLandmarks(canvas, resizedDetections);
+        }, 100)
+      };
+
+      startVideo();
+      const vid = videoRef.current;
+      if (!vid) return;
+      vid.addEventListener('loadedmetadata', detectFace, { once: true });
+
+      return () => vid.removeEventListener('loadedmetadata', detectFace);
+    }, [modelsLoaded, stream, detect]);
     if (!stream) {
       return null;
     }
     return (
-      <video className="video-preview-player" ref={videoRef} autoPlay muted />
+      <div style={{position: 'relative'}}>
+        <video className={className} ref={videoRef} autoPlay muted />
+        <canvas ref={canvasRef} style={{position: 'absolute', inset: 0, pointerEvents: 'none'}}/>
+      </div>
     );
   };
 
@@ -33,6 +113,15 @@ function Recorder() {
     console.log(blobUrl);
     analyzeWebmBlob(blob);
   };
+
+  useEffect(() => {
+    navigator.mediaDevices
+      .getUserMedia({ video: true })
+      .then(setIdleStream)
+      .catch(console.error)
+
+    return () => idleStream?.getTracks().forEach(t => t.stop());
+  }, []);
 
   return (
     <>
@@ -74,7 +163,7 @@ function Recorder() {
                   loop
                 />
               ) : (
-                <VideoPreview stream={previewStream} />
+                <VideoPreview className={status === "idle" ? "video-player" : "video-preview-player"} stream={status === 'idle' ? idleStream : previewStream} detect={status === 'recording'}/>
               )}
             </div>
           )}
