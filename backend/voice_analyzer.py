@@ -1,12 +1,8 @@
-import sounddevice as sd
 import librosa
 import parselmouth
 import soundfile as sf
-from datetime import datetime
 import whisper
 import os
-import sys
-import time # Keep for sd.sleep in record_audio
 from google.api_core.exceptions import PermissionDenied
 # Correct import based on diagnostic errors and typical usage
 import google.generativeai as genai
@@ -16,8 +12,6 @@ from scipy.stats import skew, kurtosis
 # Removed plotting imports: matplotlib, FigureCanvasTkAgg
 # Removed video imports: cv2, PIL
 import numpy as np
-import threading # Keep for the console recording method
-
 # --- VoiceAnalyzer Class (Modified for Console Output) ---
 class VoiceAnalyzer:
     def __init__(self):
@@ -37,91 +31,6 @@ class VoiceAnalyzer:
             # Decide how to handle this - maybe exit or disable transcription?
             # We will disable transcription by keeping self.whisper_model as None
 
-
-    def record_audio(self):
-        """Record audio until Enter is pressed (Console version)"""
-        print("Recording... Press Enter to stop recording")
-        audio_queue = queue.Queue()
-        recording = [True] # Use a mutable list to pass state to inner function
-
-        def audio_callback(indata, frames, callback_time, status):
-            if status:
-                 # Print status messages to stderr as recommended by sounddevice docs
-                 print(f"Sounddevice status: {status}", file=sys.stderr)
-            if recording[0]:
-                 # Put data into the queue
-                 audio_queue.put(indata.copy())
-
-        def stop_recording():
-            # Wait for Enter key press in a separate thread
-            input()
-            recording[0] = False # Signal the main thread to stop recording
-
-        record_stop_thread = threading.Thread(target=stop_recording, daemon=True)
-        record_stop_thread.start()
-
-        recorded_data = []
-        try:
-            # Use InputStream context manager for automatic cleanup
-            with sd.InputStream(
-                samplerate=self.sample_rate,
-                channels=self.channels,
-                callback=audio_callback,
-                dtype='float32' # Use float32 for consistency with analysis libs
-            ):
-                # Wait for the stop signal (recording[0] becomes False)
-                # Use sounddevice.sleep to yield control within the stream context
-                while recording[0]:
-                    sd.sleep(100) # Sleep for 100 milliseconds
-
-        except sd.PortAudioError as pae:
-             print(f"PortAudio Error: {pae}")
-             print("Please check your microphone setup and permissions.")
-             return np.array([]) # Return empty array on error
-        except Exception as e:
-            print(f"An unexpected error occurred during recording: {e}")
-            return np.array([]) # Return empty array on error
-
-
-        # Process the queued audio data after the stream is closed
-        print("Combining recorded audio chunks...")
-        while not audio_queue.empty():
-            try:
-                # Get data from queue without blocking
-                recorded_data.append(audio_queue.get_nowait())
-            except queue.Empty:
-                # Should not happen in a simple loop but good practice
-                break
-
-        if recorded_data:
-             # Concatenate all collected chunks
-             combined_audio = np.concatenate(recorded_data, axis=0)
-             print(f"Recording finished. Captured {len(combined_audio) / self.sample_rate:.2f} seconds.")
-             return combined_audio
-        else:
-             print("No audio data captured.")
-             return np.array([]) # Return empty array if no data was collected
-
-
-    def save_audio(self, recording, filename=None):
-        if recording is None or recording.size == 0:
-             print("No audio data to save.")
-             return None
-
-        if filename is None:
-            filename = f"recording_{datetime.now().strftime('%Y%m%d_%H%M%S')}.wav"
-
-        # Ensure recording is float32 for soundfile write
-        if recording.dtype != np.float32:
-            recording = recording.astype(np.float32)
-
-        try:
-            sf.write(filename, recording, self.sample_rate)
-            print(f"Audio saved to: {filename}")
-            return filename
-        except Exception as e:
-            print(f"Error saving audio file {filename}: {e}")
-            return None
 
     def transcribe_audio(self, audio_file):
         if not self.whisper_model:
@@ -585,110 +494,3 @@ class VoiceAnalyzer:
 
 
 # --- Main Execution ---
-def main():
-    # IMPORTANT: Set up Google API Key
-    # Replace the hardcoded key line at the top or ensure the environment variable is set
-    if not os.getenv("GOOGLE_API_KEY"):
-         print("\n" + "="*60)
-         print(" WARNING: GOOGLE_API_KEY environment variable not set.")
-         print(" Gemini recommendations will not be available.")
-         print(" See https://ai.google.dev/ for setup.")
-         print("="*60 + "\n")
-
-
-    # Initialize the voice analyzer (loads Whisper model)
-    analyzer = None
-    try:
-         analyzer = VoiceAnalyzer()
-         # If Whisper failed to load, transcription will be skipped internally
-         # No need to exit unless Whisper is strictly required
-         # if analyzer.whisper_model is None:
-         #      print("Whisper model failed to load. Transcription disabled.")
-
-    except Exception as init_e:
-         print(f"Fatal error during initialization: {init_e}")
-         print("Exiting.")
-         return
-
-
-    # Simple console loop for interaction
-    while True:
-        print("\n--- Voice Analysis Menu ---")
-        print("r: Record new audio")
-        print("f: Analyze existing audio file")
-        print("q: Quit")
-        choice = input("Enter choice (r/f/q): ").lower().strip()
-
-        audio_data = None
-        audio_filepath = None
-
-        if choice == 'r':
-            audio_data = analyzer.record_audio()
-            if audio_data is not None and audio_data.size > 0:
-                # Save the recorded audio to a temporary file for analysis
-                audio_filepath = analyzer.save_audio(audio_data)
-                # Clean up the recording variable after saving
-                audio_data = None # Free up memory
-            else:
-                 print("Recording failed or was empty.")
-                 continue # Go back to menu
-
-        elif choice == 'f':
-            audio_filepath = input("Enter path to audio file: ").strip()
-            if not os.path.exists(audio_filepath):
-                 print(f"Error: File not found at '{audio_filepath}'")
-                 continue # Go back to menu
-
-        elif choice == 'q':
-            print("Exiting.")
-            break # Exit the main loop
-
-        else:
-            print("Invalid choice. Please enter 'r', 'f', or 'q'.")
-            continue # Go back to menu
-
-
-        # --- Perform Analysis ---
-        if audio_filepath and os.path.exists(audio_filepath):
-             print(f"\nAnalyzing audio from: {audio_filepath}")
-             analysis_results = None
-             try:
-                 analysis_results = analyzer.analyze_audio(audio_filepath)
-                 print("\n--- Analysis Results ---")
-                 feedback_text = analyzer.generate_feedback(analysis_results)
-                 print(feedback_text)
-
-                 # Get and print Gemini recommendations
-                 recommendations = analyzer.get_gemini_recommendations(feedback_text)
-                 print("\n--- AI Recommendations ---")
-                 print(recommendations)
-
-             except FileNotFoundError:
-                  # This case should be caught before here, but keeping for robustness
-                  print(f"Analysis failed: Audio file not found during analysis step: {audio_filepath}")
-             except ValueError as ve: # e.g., empty audio data after reading
-                  print(f"Analysis failed: Audio data error - {ve}")
-             except IOError as ioe: # e.g., problem reading file
-                  print(f"Analysis failed: File read error - {ioe}")
-             except Exception as e:
-                 print(f"An unexpected error occurred during analysis: {e}")
-                 import traceback
-                 traceback.print_exc() # Print traceback for unexpected errors
-
-             finally:
-                 # Clean up the temporary audio file if recording was just done
-                 if choice == 'r' and audio_filepath and os.path.exists(audio_filepath):
-                     try:
-                         print(f"\nRemoving temporary audio file: {audio_filepath}")
-                         os.remove(audio_filepath)
-                     except OSError as oe:
-                         print(f"Warning: Could not remove temporary audio file {audio_filepath}: {oe}")
-                 audio_filepath = None # Clear reference
-
-        else:
-            # This might happen if recording failed or file wasn't found
-            print("Analysis skipped.")
-
-
-if __name__ == "__main__":
-    main()

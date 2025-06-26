@@ -4,7 +4,6 @@ from pydantic import BaseModel, HttpUrl
 import os
 import uuid
 import subprocess
-import httpx
 from fastapi.middleware.cors import CORSMiddleware
 from voice_analyzer import VoiceAnalyzer
 
