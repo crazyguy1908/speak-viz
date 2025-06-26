@@ -1,12 +1,93 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { ReactMediaRecorder } from "react-media-recorder";
+import dynamic from 'next/dynamic';
+import * as faceapi from 'face-api.js';
+import '@tensorflow/tfjs-backend-webgl';
 const API_URL = "http://localhost:8000/analyze";
 
+const ReactMediaRecorder = dynamic(
+  () => import('react-media-recorder').then(m => m.ReactMediaRecorder),
+  { ssr: false }
+);
+
 function Recorder() {
-  const VideoPreview = ({ stream }) => {
-    const videoRef = useRef(null);
+
+  const [modelsLoaded, setModelsLoaded] = useState(false);
+  const detectionLoopId = useRef(null);
+  const canvasRef = useRef(null);
+  const videoRef = useRef(null);
+
+  useEffect(() => {
+    async function loadModels() {
+      await faceapi.tf.setBackend('webgl');
+      await faceapi.tf.ready();
+      await Promise.all([
+        faceapi.nets.tinyFaceDetector.loadFromUri('/models/tiny_face_detector'),
+        faceapi.nets.faceLandmark68Net.loadFromUri('/models/face_landmark_68')
+      ]);
+      setModelsLoaded(true);
+    }
+    loadModels();
+  }, [])
+
+  const startDetection = () => {
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+
+    const run = async () => {
+      const displaySize = { width: video.videoWidth, height: video.videoHeight };
+      if (canvas.width !== displaySize.width) {
+        canvas.width = displaySize.width;
+        canvas.height = displaySize.height;
+      }
+      const opts = new faceapi.TinyFaceDetectorOptions({ inputSize: 224 });
+      const detections = await faceapi
+        .detectAllFaces(video, opts)
+        .withFaceLandmarks();
+      
+      console.log('faces', detections.length);
+      
+      const resized = faceapi.resizeResults(detections, displaySize);
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      faceapi.draw.drawDetections(canvas, resized);
+      faceapi.draw.drawFaceLandmarks(canvas, resized);
+
+      detectionLoopId.current = requestAnimationFrame(run);
+    };
+
+    run();
+  };
+
+  const stopDetection = () => {
+    if (detectionLoopId.current) {
+      cancelAnimationFrame(detectionLoopId.current);
+      detectionLoopId.current = null;
+      if (canvasRef.current) {
+        canvasRef.current.getContext('2d').clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+      }
+    }
+  }
+
+  const VideoPreview = ({ stream, recording }) => {
+    
+
+    useEffect(() => {
+      if (videoRef.current && stream) videoRef.current.srcObject = stream;
+    }, [stream]);
+
+    useEffect(() => {
+      if (stream && modelsLoaded && videoRef.current?.readyState >= 2) {
+        startDetection();
+      }
+      else {
+        stopDetection();
+      }
+      return () => stopDetection();
+    }, [stream, modelsLoaded]);
+
+    
 
     useEffect(() => {
       if (videoRef.current && stream) {
@@ -16,10 +97,15 @@ function Recorder() {
     if (!stream) {
       return null;
     }
+    if (!stream) return null;
     return (
-      <video className="video-preview-player" ref={videoRef} autoPlay muted />
+      <div style={{position: 'relative', width: 500, height: 500}}>
+        <video ref={videoRef} autoPlay muted style={{width: '100%', height: '100%'}}/>
+        <canvas ref={canvasRef} className="overlay-canvas" width={500} height={500} style={{position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none'}} />
+      </div>
     );
   };
+  
 
   const handleDownload = (blobUrl, blob) => {
     const fileName = `speakviz-recording-${Date.now()}.webm`;
@@ -74,7 +160,7 @@ function Recorder() {
                   loop
                 />
               ) : (
-                <VideoPreview stream={previewStream} />
+                <VideoPreview stream={previewStream} recording={status === 'recording'} />
               )}
             </div>
           )}
