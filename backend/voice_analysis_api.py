@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, UploadFile, File
+from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, HttpUrl
 import os
@@ -24,15 +24,22 @@ class AnalyzeRequest(BaseModel):
     url: HttpUrl  # ensures we get a valid URL
 
 @app.post("/analyze")
-async def analyze_audio(file: UploadFile = File(...)):
+async def analyze_audio(req: AnalyzeRequest):
     # only allow .webm URLsxx
     base_id = uuid.uuid4().hex
     webm_path = os.path.join(UPLOAD_DIR, f"{base_id}.webm")
     wav_path = os.path.join(UPLOAD_DIR, f"{base_id}.wav")
 
-    with open(webm_path, "wb") as f:
-        f.write(await file.read())
-
+    # 1) Download the remote file
+    try:
+        async with httpx.AsyncClient() as client:
+            resp = await client.get(str(req.url))
+            resp.raise_for_status()
+        with open(webm_path, "wb") as f:
+            f.write(resp.content)
+    except Exception as e:
+        # Could refine on HTTP vs filesystem errors
+        raise HTTPException(status_code=502, detail=f"Failed to download .webm: {e}")
 
     # 2) Convert .webm → .wav
     try:
@@ -51,9 +58,6 @@ async def analyze_audio(file: UploadFile = File(...)):
         analysis = enhancer.analyze_audio(wav_path)
         feedback = enhancer.generate_feedback(analysis)
         recommendations = enhancer.get_gemini_recommendations(feedback)
-        print(analysis)
-        print(feedback)
-        print(recommendations)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Analysis error: {e}")
     finally:
@@ -66,8 +70,6 @@ async def analyze_audio(file: UploadFile = File(...)):
         "feedback": feedback,
         "recommendations": recommendations
     })
-
-
 
 
 @app.get("/")

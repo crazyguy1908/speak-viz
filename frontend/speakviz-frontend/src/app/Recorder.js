@@ -107,17 +107,15 @@ function Recorder() {
   };
   
 
-  const handleDownload = (blobUrl, blob) => {
+  const handleDownload = (blobUrl) => {
     const fileName = `speakviz-recording-${Date.now()}.webm`;
 
     const link = document.createElement("a");
     link.href = blobUrl;
     link.download = fileName;
     document.body.appendChild(link);
-    // link.click();
-    console.log(link);
-    console.log(blobUrl);
-    analyzeWebmBlob(blob);
+    link.click();
+    analyzeRemoteWebm(blobUrl);
   };
 
   return (
@@ -170,17 +168,28 @@ function Recorder() {
   );
 }
 
-async function analyzeWebmBlob(blob) {
-  const formData = new FormData();
-  formData.append("file", blob, "recording.webm");
+async function analyzeRemoteWebm(url) {
+  try {
+    const response = await fetch(API_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ url }),
+    });
 
-  const resp = await fetch(API_URL, { method: "POST", body: formData });
-  if (!resp.ok) throw new Error(await resp.text());
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(`API error: ${error.detail || response.status}`);
+    }
 
-  const data = await fetch(resp.json)
-  console.log("Analysis:", data.analysis);
-  console.log("Feedback:", data.feedback);
-  console.log("Recommendations:", data.recommendations);
+    const data = await response.json();
+    console.log("Analysis:", data.analysis);
+    console.log("Feedback:", data.feedback);
+    console.log("Recommendations:", data.recommendations);
+  } catch (err) {
+    console.error("Failed to analyze audio:", err);
+  }
 }
 
 export default Recorder;
