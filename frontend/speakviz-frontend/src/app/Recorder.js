@@ -69,6 +69,7 @@ function Recorder() {
           const detections = await faceapi 
             .detectAllFaces(video, new faceapi.TinyFaceDetectorOptions())
             .withFaceLandmarks()
+            .withFaceExpressions()
 
           console.log(detections);
 
@@ -80,6 +81,7 @@ function Recorder() {
           canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
           faceapi.draw.drawDetections(canvas, resizedDetections);
           faceapi.draw.drawFaceLandmarks(canvas, resizedDetections);
+          faceapi.draw.drawFaceExpressions(canvas, resizedDetections);
         }, 100)
       };
 
