@@ -4,13 +4,8 @@ import soundfile as sf
 import whisper
 import os
 from google.api_core.exceptions import PermissionDenied
-# Correct import based on diagnostic errors and typical usage
 import google.generativeai as genai
-
 from scipy.stats import skew, kurtosis
-# Removed GUI imports: tkinter, ttk, scrolledtext, messagebox
-# Removed plotting imports: matplotlib, FigureCanvasTkAgg
-# Removed video imports: cv2, PIL
 import numpy as np
 # --- VoiceAnalyzer Class (Modified for Console Output) ---
 class VoiceAnalyzer:
@@ -18,18 +13,14 @@ class VoiceAnalyzer:
         self.sample_rate = 44100
         self.channels = 1
         print("Loading Whisper model...")
-        self.whisper_model = None # Initialize to None
+        self.whisper_model = None
 
-        # Consider error handling if model loading fails
         try:
-            # Specify model path or let it download to default location (~/.cache/whisper)
             self.whisper_model = whisper.load_model("base")
             print("Whisper model loaded successfully.")
         except Exception as e:
             print(f"Error loading Whisper model: {e}")
             print("Transcription functionality will be disabled.")
-            # Decide how to handle this - maybe exit or disable transcription?
-            # We will disable transcription by keeping self.whisper_model as None
 
 
     def transcribe_audio(self, audio_file):
@@ -41,13 +32,12 @@ class VoiceAnalyzer:
              return "Transcription unavailable (audio file missing)."
         print("Transcribing audio...")
         try:
-            # Whisper's transcribe expects a file path or numpy array
             result = self.whisper_model.transcribe(audio_file)
             print("Transcription complete.")
-            return result.get("text", "Transcription failed.") # Use .get to handle potential missing key
+            return result.get("text", "Transcription failed.")
         except Exception as e:
             print(f"Error during transcription: {e}")
-            return f"Transcription failed: {e}" # Return error message
+            return f"Transcription failed: {e}"
 
     def analyze_audio(self, audio_file):
         print(f"Analyzing audio file: {audio_file}")
@@ -65,16 +55,13 @@ class VoiceAnalyzer:
             print("Analysis failed: Audio file is empty.")
             raise ValueError("Audio data is empty.")
 
-        # Ensure audio data is float and mono for analysis libraries
         if len(y.shape) > 1:
             y = np.mean(y, axis=1) # Convert to mono if stereo
 
-        # Normalize if integer type (common for WAV files)
-        # Corrected usage of np.iinfo
+
         if np.issubdtype(y.dtype, np.integer):
              y = y.astype(np.float32) / np.iinfo(y.dtype).max
         elif not np.issubdtype(y.dtype, np.floating):
-             # If it's neither int nor float (unlikely but safe check)
              print(f"Warning: Unexpected audio data type {y.dtype}. Attempting conversion to float32.")
              y = y.astype(np.float32)
 
@@ -83,14 +70,12 @@ class VoiceAnalyzer:
         sound = parselmouth.Sound(y, sr)
         print("Sound object created.")
 
-        # Perform transcription first, as it's often the longest step
         transcription = self.transcribe_audio(audio_file)
         print(f"Transcription:\n{transcription}")
 
 
         print("Starting detailed analysis...")
         analysis = {
-            # 'audio': y, # Removed raw audio data from results dict as it's not used by feedback generation
             'sample_rate': sr,
             'transcription': transcription,
             'pitch': self._analyze_pitch(sound),
@@ -104,7 +89,6 @@ class VoiceAnalyzer:
 
     def _analyze_pitch(self, sound):
         try:
-            # Default pitch analysis settings
             pitch = sound.to_pitch(time_step=0.01, pitch_floor=75.0, pitch_ceiling=600.0)
             pitch_values = pitch.selected_array['frequency']
             valid_pitch = pitch_values[pitch_values > 0] # Filter out unvoiced (0 Hz)
@@ -120,72 +104,49 @@ class VoiceAnalyzer:
                     'skewness': float(skew(valid_pitch)),
                     'kurtosis': float(kurtosis(valid_pitch))
                 }
-                # Simple pitch register estimation
                 mean_pitch = pitch_stats['mean']
-                if mean_pitch < 100: pitch_stats['register'] = 'very low' # Male
-                elif mean_pitch < 150: pitch_stats['register'] = 'low' # Male/Alto
-                elif mean_pitch < 250: pitch_stats['register'] = 'medium' # Female/Tenor
-                elif mean_pitch < 300: pitch_stats['register'] = 'high' # Female/Soprano
-                else: pitch_stats['register'] = 'very high' # Child/High Soprano/Falsetto
+                if mean_pitch < 100: pitch_stats['register'] = 'very low'
+                elif mean_pitch < 150: pitch_stats['register'] = 'low'
+                elif mean_pitch < 250: pitch_stats['register'] = 'medium'
+                elif mean_pitch < 300: pitch_stats['register'] = 'high'
+                else: pitch_stats['register'] = 'very high'
 
                 return pitch_stats
             else:
-                # Return default zero stats if no valid pitch detected
                 return {'mean': 0.0, 'std': 0.0, 'range': (0.0, 0.0), 'median': 0.0, 'q25': 0.0, 'q75': 0.0, 'skewness': 0.0, 'kurtosis': 0.0, 'register': 'undefined (no pitch detected)'}
         except Exception as e:
             print(f"Error analyzing pitch: {e}")
-            # Return default zero stats with error status on failure
             return {'mean': 0.0, 'std': 0.0, 'range': (0.0, 0.0), 'median': 0.0, 'q25': 0.0, 'q75': 0.0, 'skewness': 0.0, 'kurtosis': 0.0, 'register': 'error'}
 
     def _analyze_prosody(self, sound, y, sr):
         try:
-            # Get Intensity
             intensity = sound.to_intensity(time_step=0.01)
-            # Intensity values are often in a 2D array from to_intensity
             intensity_values = intensity.values.flatten() # Use flatten for simplicity
             intensity_values = intensity_values[intensity_values > -200] # Filter out extremely low values that might be calculation artifacts
 
-            # Get Pitch for intonation analysis
             pitch = sound.to_pitch(time_step=0.01, pitch_floor=75.0, pitch_ceiling=600.0)
             pitch_values = pitch.selected_array['frequency']
             valid_pitch = pitch_values[pitch_values > 0] # Filter unvoiced
 
-            # Analyze Intonation patterns (simple approach)
             rising_patterns = falling_patterns = 0
-            # Only analyze slope if enough valid pitch points exist
             if len(valid_pitch) > 1:
-                # Find indices where pitch transitions occur
                 pitch_diff = np.diff(valid_pitch)
-                # Consider a "significant" slope change (e.g., > 2 Hz change per 10ms frame)
                 rising_patterns = np.sum(pitch_diff > 2)
                 falling_patterns = np.sum(pitch_diff < -2)
 
-
-            # Analyze Rhythm (using librosa onset detection)
-            # Ensure y is float32 as required by librosa
             if not np.issubdtype(y.dtype, np.floating):
                  y = y.astype(np.float32)
-
-            # Adjust frame_length and hop_length for onset detection sensitivity
-            onset_env = librosa.onset.onset_strength(y=y, sr=sr, hop_length=512) # Default hop_length is often 512 or 1024
-            # Use aggressive peak picking for onset detection
-            onsets = librosa.onset.onset_detect(onset_envelope=onset_env, sr=sr, hop_length=512, units='time') # Units in seconds
-
-
-            # Estimated Tempo (Beats Per Minute based on onsets)
-            # This is a simple estimate; more robust methods exist but require longer audio
+            onset_env = librosa.onset.onset_strength(y=y, sr=sr, hop_length=512)
+            onsets = librosa.onset.onset_detect(onset_envelope=onset_env, sr=sr, hop_length=512, units='time')
             duration = len(y) / sr
-            # Avoid division by zero or very small duration
-            tempo = len(onsets) * (60 / duration) if duration > 1 else 0 # Need at least 1 second to estimate tempo
-
-            # Rate Variability (Standard deviation of time differences between onsets)
+            tempo = len(onsets) * (60 / duration) if duration > 1 else 0
             rate_variability = 0.0
+
             if len(onsets) > 1:
                 onset_intervals = np.diff(onsets)
                 if len(onset_intervals) > 0:
                      rate_variability = float(np.std(onset_intervals))
 
-            # Intensity Statistics
             intensity_stats = {
                 'mean': float(np.mean(intensity_values)) if len(intensity_values) > 0 else 0.0,
                 'std': float(np.std(intensity_values)) if len(intensity_values) > 0 else 0.0,
@@ -193,7 +154,6 @@ class VoiceAnalyzer:
                 'variability': float(np.std(np.diff(intensity_values))) if len(intensity_values) > 1 else 0.0
             }
 
-            # Power Ratio (Proportion of frames above median intensity - rough measure of vocal effort variation)
             power_ratio = 0.0
             if len(intensity_values) > 0:
                 median_intensity = np.median(intensity_values)
@@ -214,56 +174,34 @@ class VoiceAnalyzer:
             }
         except Exception as e:
              print(f"Error analyzing prosody: {e}")
-             # Return empty dictionaries on error
              return {'intensity': {}, 'intonation': {}, 'rhythm': {}}
-
 
     def _analyze_speed(self, y, sr):
         try:
-            # Ensure y is float32 for librosa
             if not np.issubdtype(y.dtype, np.floating):
                  y = y.astype(np.float32)
-
-            # Use onset detection to count vocalizations (roughly corresponds to syllables/words)
             onset_env = librosa.onset.onset_strength(y=y, sr=sr, hop_length=512)
             onsets = librosa.onset.onset_detect(onset_envelope=onset_env, sr=sr, hop_length=512, units='time')
 
             duration = len(y) / sr
-            # Simple WPM estimate: count onsets and scale by duration
-            # This is a rough estimate and highly dependent on onset detection sensitivity and speaking style
             estimated_wpm = len(onsets) * (60 / duration) if duration > 0 else 0
-
             return {'estimated_wpm_onsets': float(estimated_wpm), 'onset_count': int(len(onsets))} # Name changed for clarity
         except Exception as e:
             print(f"Error analyzing speed: {e}")
             return {'estimated_wpm_onsets': 0.0, 'onset_count': 0}
 
-
     def _analyze_pauses(self, y, sr):
         try:
-            # Ensure y is float32 for librosa
             if not np.issubdtype(y.dtype, np.floating):
                  y = y.astype(np.float32)
-
-            # Use librosa.effects.split to identify non-silent intervals
-            # top_db: the threshold (in dB) below maximum power to consider as silent.
-            # A higher value means more sensitive (detects quieter speech/noise as non-silent).
-            # frame_length, hop_length: affect the granularity of detection. Defaults are often fine.
             non_silent_intervals = librosa.effects.split(y, top_db=30) # Adjusted top_db slightly
-
             pauses = []
-            last_end_sample = 0 # Keep track of the end sample of the last non-silent segment
+            last_end_sample = 0
 
-            # Iterate through detected non-silent intervals
             for start_sample, end_sample in non_silent_intervals:
-                # The gap between the end of the previous segment and the start of the current one is a pause
                 pause_duration = (start_sample - last_end_sample) / sr
-
-                # Set a minimum pause duration to avoid counting tiny breathing gaps or computation artifacts
                 if pause_duration > 0.2: # Minimum pause 200ms (slightly increased from 100ms)
                      pauses.append(pause_duration)
-
-                # Update the last end sample to the end of the current segment
                 last_end_sample = end_sample
 
             # Check for a potential pause after the last non-silent segment until the very end of the audio
@@ -488,9 +426,3 @@ class VoiceAnalyzer:
         except Exception as e:
             print(f"Error calling Gemini API: {e}")
             return f"Gemini recommendations unavailable (API Error: {type(e).__name__} - {e})."
-
-
-# Removed VoiceAnalyzerGUI class
-
-
-# --- Main Execution ---
