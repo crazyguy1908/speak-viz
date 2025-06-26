@@ -10,9 +10,22 @@ function Recorder() {
   const [analysis, setAnalysis] = useState("");
   const [feedback, setFeedback] = useState("");
   const [recommendations, setRecommendations] = useState("");
+  const [selectedContext, setSelectedContext] = useState("general");
+  const contexts = [
+    { value: "general", label: "General Speaking" },
+    { value: "presentation", label: "Business Presentation" },
+    { value: "interview", label: "Job Interview" },
+    { value: "meeting", label: "Team Meeting" },
+    { value: "pitch", label: "Sales Pitch" },
+    { value: "lecture", label: "Teaching/Lecture" },
+    { value: "podcast", label: "Podcast/Interview" },
+    { value: "storytelling", label: "Storytelling" },
+    { value: "debate", label: "Debate/Discussion" },
+  ];
   async function analyzeWebmBlob(blob) {
     const formData = new FormData();
     formData.append("file", blob, "recording.webm");
+    formData.append("context", selectedContext);
 
     try {
       const resp = await fetch(API_URL, {
@@ -170,6 +183,21 @@ function Recorder() {
           }) => (
             <div className="recorder-container">
               <h1>{status}</h1>
+              <div className="context-selector" style={{ marginBottom: 20 }}>
+                <label htmlFor="context-select">Speaking Context: </label>
+                <select
+                  id="context-select"
+                  value={selectedContext}
+                  onChange={(e) => setSelectedContext(e.target.value)}
+                  style={{ marginLeft: 10, padding: 5 }}
+                >
+                  {contexts.map((context) => (
+                    <option key={context.value} value={context.value}>
+                      {context.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
               <div className="controls">
                 <button
                   className="start-button"

@@ -386,41 +386,51 @@ class VoiceAnalyzer:
         return "\n".join(feedback_parts)
 
 
-    def get_gemini_recommendations(self, feedback_text):
-        """ Get recommendations from Gemini based on the feedback text. """
+    def get_gemini_recommendations(self, feedback_text, context="general"):
+        """ Get recommendations from Gemini based on the feedback text and speaking context. """
+
+        # Context-specific prompt modifications
+        context_prompts = {
+            "presentation": "Focus on executive presence, clear messaging, and audience engagement for business presentations.",
+            "interview": "Emphasize confidence, clarity, and professional communication suitable for job interviews.",
+            "meeting": "Consider collaborative communication, active listening cues, and meeting facilitation skills.",
+            "pitch": "Focus on persuasive delivery, enthusiasm, and compelling narrative for sales situations.",
+            "lecture": "Emphasize educational clarity, student engagement, and knowledge transfer techniques. mention i am a teacher before giving any feedback",
+            "podcast": "Consider conversational flow, authenticity, and audio-only communication best practices.",
+            "storytelling": "Focus on narrative flow, emotional connection, and audience engagement through stories.",
+            "debate": "Emphasize logical argumentation, confident delivery, and respectful discourse techniques.",
+            "general": "Provide well-rounded public speaking advice applicable to various situations. say this is general context before anything else"
+        }
+
+        context_addition = context_prompts.get(context, context_prompts["general"])
+
         api_key = "AIzaSyA4j6MyrkAuGqf8cf0dbNnfXYgz75GDq1g"
         if not api_key:
-            # print("GOOGLE_API_KEY environment variable not set.")
             return "Gemini recommendations unavailable (API key missing)."
 
         try:
-            # genai.configure(api_key=api_key) # Use genai.GenerativeModel directly with api_key
-            # Use a model known for generation tasks, like gemini-1.5-flash
-            # Ensure the model name is correct and available for your key
             genai.configure(api_key="AIzaSyA4j6MyrkAuGqf8cf0dbNnfXYgz75GDq1g")
-            model = genai.GenerativeModel('gemini-1.5-flash') # Pass api_key here
+            model = genai.GenerativeModel('gemini-1.5-flash')
 
             prompt = (
                 f"Analyze the following voice analysis feedback and provide 5 concise, actionable recommendations "
-                f"for the speaker to improve their public speaking delivery. Focus on clarity, engagement, and addressing potential "
-                f"issues highlighted in the feedback (like pace, pauses, pitch monotony, volume). Present the recommendations as a numbered list.\n\n"
+                f"for the speaker to improve their public speaking delivery. {context_addition} "
+                f"Focus on clarity, engagement, and addressing potential issues highlighted in the feedback "
+                f"(like pace, pauses, pitch monotony, volume). Present the recommendations as a numbered list.\n\n"
                 f"Feedback:\n{feedback_text}\n\nRecommendations:"
             )
 
+            # rest of your existing code stays the same
             print("Generating Gemini recommendations...")
             response = model.generate_content(prompt)
             print("Gemini response received.")
 
-            # Access response text correctly and handle potential issues
             if response and response.text:
                  return response.text
             else:
-                 # Check response.prompt_feedback for safety reasons etc.
                  feedback = response.prompt_feedback if response.prompt_feedback else "No prompt feedback available."
                  print(f"Gemini response was empty or blocked. Feedback: {feedback}")
                  return f"Could not generate recommendations (response empty or blocked. Feedback: {feedback})."
-
-
         except PermissionDenied:
              print("Gemini API Permission Denied. Check your API key and project permissions.")
              return "Gemini recommendations unavailable (Permission Denied. Check API key/permissions)."

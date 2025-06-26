@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, UploadFile, File
+from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, HttpUrl
 import os
@@ -23,8 +23,8 @@ class AnalyzeRequest(BaseModel):
     url: HttpUrl  # ensures we get a valid URL
 
 @app.post("/analyze")
-async def analyze_audio(file: UploadFile = File(...)):
-    # only allow .webm URLsxx
+async def analyze_audio(file: UploadFile = File(...), context: str = Form("general")):    # only allow .webm URLsxx
+    print(f"Received context: {context}")
     base_id = uuid.uuid4().hex
     webm_path = os.path.join(UPLOAD_DIR, f"{base_id}.webm")
     wav_path = os.path.join(UPLOAD_DIR, f"{base_id}.wav")
@@ -49,7 +49,7 @@ async def analyze_audio(file: UploadFile = File(...)):
     try:
         analysis = enhancer.analyze_audio(wav_path)
         feedback = enhancer.generate_feedback(analysis)
-        recommendations = enhancer.get_gemini_recommendations(feedback)
+        recommendations = enhancer.get_gemini_recommendations(feedback, context)
         print(analysis)
         print(feedback)
         print(recommendations)
