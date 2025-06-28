@@ -61,10 +61,10 @@ function Recorder() {
       const loadModels = async () => {
         await Promise.all([
           faceapi.nets.tinyFaceDetector.loadFromUri(
-            "/models/tiny_face_detector",
+            "/models/tiny_face_detector"
           ),
           faceapi.nets.faceLandmark68Net.loadFromUri(
-            "/models/face_landmark_68",
+            "/models/face_landmark_68"
           ),
           faceapi.nets.faceExpressionNet.loadFromUri("/models/face_expression"),
         ]);
@@ -115,7 +115,7 @@ function Recorder() {
 
           const resizedDetections = faceapi.resizeResults(
             detections,
-            displaySize,
+            displaySize
           );
 
           canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
@@ -198,22 +198,6 @@ function Recorder() {
                   ))}
                 </select>
               </div>
-              <div className="controls">
-                <button
-                  className="start-button"
-                  onClick={startRecording}
-                  disabled={status === "recording" ? true : false}
-                >
-                  Start Recording
-                </button>
-                <button
-                  className="stop-button"
-                  onClick={stopRecording}
-                  disabled={status == "idle" ? true : false}
-                >
-                  Stop Recording
-                </button>
-              </div>
               {status === "stopped" && mediaBlobUrl ? (
                 <video
                   className="video-player"
@@ -231,6 +215,10 @@ function Recorder() {
                   detect={status === "recording"}
                 />
               )}
+              <div className="controls">
+                <button className="start-button" onClick={startRecording} disabled={status === "recording" ? true : false}>Start Recording</button>
+                <button className="stop-button" onClick={stopRecording} disabled={status == "idle" ? true : false}>Stop Recording</button>
+              </div>
             </div>
           )}
         />
