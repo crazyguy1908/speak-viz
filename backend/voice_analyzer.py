@@ -89,7 +89,7 @@ class VoiceAnalyzer:
 
     def _analyze_pitch(self, sound):
         try:
-            pitch = sound.to_pitch(time_step=0.01, pitch_floor=75.0, pitch_ceiling=600.0)
+            pitch = sound.to_pitch(time_step=0.5, pitch_floor=75.0, pitch_ceiling=600.0)
             pitch_values = pitch.selected_array['frequency']
             valid_pitch = pitch_values[pitch_values > 0] # Filter out unvoiced (0 Hz)
 
@@ -120,11 +120,11 @@ class VoiceAnalyzer:
 
     def _analyze_prosody(self, sound, y, sr):
         try:
-            intensity = sound.to_intensity(time_step=0.01)
+            intensity = sound.to_intensity(time_step=0.5)
             intensity_values = intensity.values.flatten() # Use flatten for simplicity
             intensity_values = intensity_values[intensity_values > -200] # Filter out extremely low values that might be calculation artifacts
 
-            pitch = sound.to_pitch(time_step=0.01, pitch_floor=75.0, pitch_ceiling=600.0)
+            pitch = sound.to_pitch(time_step=0.5, pitch_floor=75.0, pitch_ceiling=600.0)
             pitch_values = pitch.selected_array['frequency']
             valid_pitch = pitch_values[pitch_values > 0] # Filter unvoiced
 
@@ -190,7 +190,7 @@ class VoiceAnalyzer:
                 estimated_wpm = len(words) * (60 / duration)
                 method = "transcription"
                 raw_count = len(words)
-            else: 
+            else:
                 estimated_wpm = len(onsets) * (60 / duration) if duration > 0 else 0
                 method = "onsets"
                 raw_count = len(onsets)
@@ -210,13 +210,13 @@ class VoiceAnalyzer:
 
             for start_sample, end_sample in non_silent_intervals:
                 pause_duration = (start_sample - last_end_sample) / sr
-                if pause_duration > 0.2: # Minimum pause 200ms (slightly increased from 100ms)
+                if pause_duration > 0.3: # Minimum pause 200ms (slightly increased from 100ms)
                      pauses.append(pause_duration)
                 last_end_sample = end_sample
 
             # Check for a potential pause after the last non-silent segment until the very end of the audio
             final_pause_duration = (len(y) - last_end_sample) / sr
-            if final_pause_duration > 0.2: # Apply the same minimum duration
+            if final_pause_duration > 0.3: # Apply the same minimum duration
                 pauses.append(final_pause_duration)
 
             # Calculate statistics based on the collected pause durations
@@ -344,7 +344,7 @@ class VoiceAnalyzer:
         speed = analysis.get('speed', {})
         feedback_parts.append("--- Speaking Rate ---")
         if speed:
-            wpm = speed.get('estimated_wpm', 0) 
+            wpm = speed.get('estimated_wpm', 0)
             count = speed.get('raw_count', 0)
             speed_desc = 'undetermined'
             if wpm > 0:
@@ -352,7 +352,7 @@ class VoiceAnalyzer:
                  elif wpm < 160: speed_desc = 'moderate'
                  else: speed_desc = 'fast'
 
-            feedback_parts.append(f"- Estimated: {wpm:.0f} 'words' per minute ({speed_desc})") 
+            feedback_parts.append(f"- Estimated: {wpm:.0f} 'words' per minute ({speed_desc})")
             feedback_parts.append(f"- Word count: {count}")
         else:
              feedback_parts.append("- Could not reliably analyze speaking rate.")
