@@ -11,6 +11,13 @@ function Recorder() {
   const [feedback, setFeedback] = useState("");
   const [recommendations, setRecommendations] = useState("");
   const [selectedContext, setSelectedContext] = useState("general");
+  const landmarkStream = useRef([]);
+  const metrics = useRef({
+    frames: 0,
+    eyeContactFrames: 0,
+    yawSum: 0, yawSq: 0,
+    movePx: 0, lastBox: null
+  });
   const contexts = [
     { value: "general", label: "General Speaking" },
     { value: "presentation", label: "Business Presentation" },
@@ -51,6 +58,22 @@ function Recorder() {
       console.error("analyzeWebmBlob error:", err);
     }
   }
+
+  const resetMetrics = () => {
+    metrics.current.frames = 0;
+    metrics.current.eyeContactFrames = 0;
+  }
+
+  const reportEyeContact = () => {
+    const { frames, eyeContactFrames } = metrics.current;
+    if (frames === 0) return;
+    const ratio = eyeContactFrames / frames;
+    const pct = (ratio * 100).toFixed(1);
+    const verdict = ratio >= 0.60 ? "Good eye contact!" : "Needs work (look at the lens more)";
+
+    console.log(`Eye-contact ratio: ${eyeContactFrames}/${frames} = ${pct}% — ${verdict}`);
+  }
+
   const VideoPreview = ({ stream, className, detect }) => {
     const videoRef = useRef(null);
     const canvasRef = useRef(null);
@@ -60,9 +83,7 @@ function Recorder() {
     useEffect(() => {
       const loadModels = async () => {
         await Promise.all([
-          faceapi.nets.tinyFaceDetector.loadFromUri(
-            "/models/tiny_face_detector"
-          ),
+          faceapi.nets.ssdMobilenetv1.loadFromUri('/models/ssd_mobilenetv1'),
           faceapi.nets.faceLandmark68Net.loadFromUri(
             "/models/face_landmark_68"
           ),
@@ -107,16 +128,56 @@ function Recorder() {
 
         setInterval(async () => {
           const detections = await faceapi
-            .detectAllFaces(video, new faceapi.TinyFaceDetectorOptions())
+            .detectAllFaces(video, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.35, inputSize: 512 }))
             .withFaceLandmarks()
             .withFaceExpressions();
 
-          console.log(detections);
+          // console.log(detections);
 
           const resizedDetections = faceapi.resizeResults(
             detections,
             displaySize
           );
+
+          if (detections.length) {
+            const d = detections[0];
+            const landmarks = d.landmarks;
+
+            const w = video.videoWidth;
+            const h = video.videoHeight;
+
+            const box        = d.detection.box;          
+            const boxCX      = box.x + box.width * 0.5;
+
+            /* key landmark refs */
+            const nose       = landmarks.getNose()[0];    
+            const Linner     = landmarks.getLeftEye()[0]; 
+            const Rinner     = landmarks.getRightEye()[3];
+
+            const headYaw = (nose.x - boxCX) / (box.width * 0.5);     // –1 … 1
+
+            const eyeMidX  = (Linner.x + Rinner.x) * 0.5;
+            const eyeWidth = Math.max(landmarks.getRightEye()[0].x - landmarks.getLeftEye()[3].x, 10);
+            const gazeYaw  = (eyeMidX - nose.x) / eyeWidth;       
+
+            const HEAD_YAW_TOL = 0.30;   
+            const GAZE_YAW_TOL = 0.18;
+
+            const inEyeContact =
+                  Math.abs(headYaw) < HEAD_YAW_TOL &&
+                  Math.abs(gazeYaw) < GAZE_YAW_TOL;
+
+            metrics.current.frames++;
+            if (inEyeContact) metrics.current.eyeContactFrames++;
+
+            /* console.log(
+              `f${metrics.current.frames.toString().padStart(4)}  ` +
+              `headYaw=${headYaw.toFixed(2)}  ` +
+              `gazeYaw=${gazeYaw.toFixed(2)}  ` +
+              `eyeContact=${inEyeContact}`
+            ); */
+
+          }
 
           canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
           faceapi.draw.drawDetections(canvas, resizedDetections);
@@ -156,6 +217,7 @@ function Recorder() {
     // link.click();
     console.log(link);
     console.log(blobUrl);
+    reportEyeContact();
     analyzeWebmBlob(blob);
   };
 
@@ -174,6 +236,7 @@ function Recorder() {
         <ReactMediaRecorder
           video
           onStop={handleDownload}
+          onStart={resetMetrics}
           render={({
             status,
             startRecording,
