@@ -14,63 +14,35 @@ app.add_middleware(
     allow_methods=["POST", "OPTIONS"],
     allow_headers=["*"],
 )
-enhancer = VoiceAnalyzer()
-
+analyzer = VoiceAnalyzer()
 UPLOAD_DIR = "./uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-class AnalyzeRequest(BaseModel):
-    url: HttpUrl  # ensures we get a valid URL
-
 @app.post("/analyze")
-async def analyze_audio(file: UploadFile = File(...), context: str = Form("general")):    # only allow .webm URLsxx
-    print(f"Received context: {context}")
+async def analyze_audio(file: UploadFile = File(...), context: str = Form("general")):
     base_id = uuid.uuid4().hex
     webm_path = os.path.join(UPLOAD_DIR, f"{base_id}.webm")
     wav_path = os.path.join(UPLOAD_DIR, f"{base_id}.wav")
 
-    with open(webm_path, "wb") as f:
+    with open(webm_path, 'wb') as f:
         f.write(await file.read())
 
-
-    # 2) Convert .webm → .wav
     try:
-        subprocess.run(
-            ["ffmpeg", "-y", "-i", webm_path, "-ar", "16000", "-ac", "1", wav_path],
-            check=True,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL
-        )
-    except subprocess.CalledProcessError as e:
-        os.remove(webm_path)
-        raise HTTPException(status_code=500, detail=f"FFmpeg conversion failed: {e}")
-
-    # 3) Analyze & clean up
-    try:
-        analysis = enhancer.analyze_audio(wav_path)
-        feedback = enhancer.generate_feedback(analysis)
-        recommendations = enhancer.get_gemini_recommendations(feedback, context)
-        print(analysis)
-        print(feedback)
-        print(recommendations)
+        subprocess.run(["ffmpeg", "-y", "-i", webm_path, "-ar", "16000", "-ac", "1", wav_path], check=True)
+        analysis = analyzer.analyze_audio(wav_path)
+        feedback = analyzer.generate_feedback(analysis)
+        recommendations = analyzer.get_gemini_recommendations(analysis, context)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Analysis error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
     finally:
         for p in (webm_path, wav_path):
-            if os.path.exists(p):
-                os.remove(p)
+            if os.path.exists(p): os.remove(p)
 
     return JSONResponse({
-        "analysis": analysis,
-        "feedback": feedback,
-        "recommendations": recommendations
+        'feedback': feedback,
+        'recommendations': recommendations
     })
-
-
-
 
 @app.get("/")
 async def root():
-    return {
-        "message": "POST /analyze with JSON: { \"url\": \"https://…/audio.webm\" }"
-    }
+    return {"message": "POST /analyze with file and optional 'context' form field."}

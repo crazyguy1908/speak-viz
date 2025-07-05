@@ -275,129 +275,19 @@ class VoiceAnalyzer:
 
 
     def generate_feedback(self, analysis):
-        """Generates a human-readable summary from the analysis dictionary."""
-        feedback_parts = []
-
-        # Transcription - Always include if available
-        transcription = analysis.get('transcription', 'N/A')
-        feedback_parts.append(f"--- Transcription ---\n{transcription}\n")
-
-
-        # Pitch
-        pitch = analysis.get('pitch', {})
-        feedback_parts.append("--- Voice Pitch ---")
-        if pitch and pitch.get('register') != 'error' and pitch.get('register') != 'undefined (no pitch detected)':
-            feedback_parts.append(f"- Average Pitch: {pitch.get('mean', 0):.1f} Hz ({pitch.get('register', 'N/A')})")
-            feedback_parts.append(f"- Pitch Variation (Std Dev): {pitch.get('std', 0):.1f} Hz")
-            feedback_parts.append(f"- Pitch Range: {pitch.get('range', (0,0))[0]:.1f} Hz to {pitch.get('range', (0,0))[1]:.1f} Hz")
-            feedback_parts.append(f"- Median Pitch: {pitch.get('median', 0):.1f} Hz")
-            # Add skewness/kurtosis if desired for advanced analysis
-            # feedback_parts.append(f"- Pitch Skewness: {pitch.get('skewness', 0):.2f}")
-            # feedback_parts.append(f"- Pitch Kurtosis: {pitch.get('kurtosis', 0):.2f}")
-        elif pitch.get('register') == 'undefined (no pitch detected)':
-             feedback_parts.append("- No clear pitch detected. This might happen with whispering, vocal fry, or very noisy audio.")
-        else:
-             feedback_parts.append("- Could not reliably analyze pitch.")
-        feedback_parts.append("") # Add a blank line for separation
+        metrics = {
+                    'transcription': analysis.get('transcription'),
+                    'pitch': analysis.get('pitch'),
+                    'prosody': analysis.get('prosody'),
+                    'speed': analysis.get('speed'),
+                    'pauses': analysis.get('pauses'),
+                    'tone': analysis.get('tone')
+                }
+        return metrics
 
 
-        # Prosody (Intensity, Intonation, Rhythm)
-        prosody = analysis.get('prosody', {})
-        feedback_parts.append("--- Prosody (Volume, Intonation, Rhythm) ---")
-        if prosody:
-            intensity = prosody.get('intensity', {})
-            intonation = prosody.get('intonation', {})
-            rhythm = prosody.get('rhythm', {})
 
-            if intensity:
-                feedback_parts.append(" Volume (Intensity):")
-                feedback_parts.append(f" - Average Volume: {intensity.get('mean', 0):.1f} dB")
-                feedback_parts.append(f" - Volume Variation (Std Dev): {intensity.get('std', 0):.1f} dB")
-                feedback_parts.append(f" - Volume Range: {intensity.get('range', (0,0))[0]:.1f} dB to {intensity.get('range', (0,0))[1]:.1f} dB")
-                feedback_parts.append(f" - Frame-to-Frame Variability: {intensity.get('variability', 0):.2f} dB")
-            else:
-                 feedback_parts.append(" Volume (Intensity): - Analysis unavailable.")
-
-
-            if intonation:
-                feedback_parts.append("\n Intonation:")
-                feedback_parts.append(f" - Estimated Rising Patterns: {intonation.get('rising_patterns', 0)}")
-                feedback_parts.append(f" - Estimated Falling Patterns: {intonation.get('falling_patterns', 0)}")
-                feedback_parts.append(f" - Pitch Dynamism (voiced pitch variation): {intonation.get('pitch_dynamism', 0):.1f} Hz")
-            else:
-                 feedback_parts.append("\n Intonation: - Analysis unavailable.")
-
-            if rhythm:
-                 feedback_parts.append("\n Rhythm:")
-                 feedback_parts.append(f" - Estimated Tempo (based on vocal onsets): {rhythm.get('estimated_tempo_onsets', 0):.1f} 'beats' per minute")
-                 feedback_parts.append(f" - Rate Variability (std dev of onset intervals): {rhythm.get('rate_variability', 0):.2f} seconds")
-                 feedback_parts.append(f" - Vocal Effort Consistency (Power Ratio): {rhythm.get('power_ratio', 0):.2f} (Proportion of frames above median volume)")
-            else:
-                 feedback_parts.append("\n Rhythm: - Analysis unavailable.")
-
-        else:
-            feedback_parts.append("- Could not reliably analyze prosody.")
-        feedback_parts.append("")
-
-
-        # Speed
-        speed = analysis.get('speed', {})
-        feedback_parts.append("--- Speaking Rate ---")
-        if speed:
-            wpm = speed.get('estimated_wpm', 0)
-            count = speed.get('raw_count', 0)
-            speed_desc = 'undetermined'
-            if wpm > 0:
-                 if wpm < 120: speed_desc = 'slow'
-                 elif wpm < 160: speed_desc = 'moderate'
-                 else: speed_desc = 'fast'
-
-            feedback_parts.append(f"- Estimated: {wpm:.0f} 'words' per minute ({speed_desc})")
-            feedback_parts.append(f"- Word count: {count}")
-        else:
-             feedback_parts.append("- Could not reliably analyze speaking rate.")
-        feedback_parts.append("")
-
-        # Pauses
-        pauses = analysis.get('pauses', {})
-        feedback_parts.append("--- Pauses ---")
-        if pauses:
-            feedback_parts.append(f"- Number of significant pauses (>0.2s): {pauses.get('count', 0)}")
-            feedback_parts.append(f"- Average pause duration: {pauses.get('mean_duration', 0):.2f} seconds")
-            feedback_parts.append(f"- Longest pause duration: {pauses.get('longest_duration', 0):.2f} seconds") # Added longest pause
-            feedback_parts.append(f"- Total time paused: {pauses.get('total_duration', 0):.2f} seconds")
-            # Calculate speaking time vs total time
-            total_duration = len(analysis.get('audio', [])) / analysis.get('sample_rate', 1) if analysis.get('sample_rate', 1) > 0 else 0
-            speaking_time = total_duration - pauses.get('total_duration', 0)
-            if total_duration > 0:
-                 feedback_parts.append(f"- Speaking time percentage: {(speaking_time / total_duration * 100):.1f}%")
-
-        else:
-            feedback_parts.append("- Could not reliably analyze pauses.")
-        feedback_parts.append("")
-
-        # Tone/Timbre
-        tone = analysis.get('tone', {})
-        feedback_parts.append("--- Tone / Timbre ---")
-        if tone:
-             # Use updated keys
-             feedback_parts.append(f"- Brightness (Avg. Spectral Centroid): {tone.get('brightness (spectral centroid)', 0):.1f} Hz")
-             feedback_parts.append(f"- Energy Distribution (Avg. Spectral Rolloff): {tone.get('energy distribution (spectral rolloff)', 0):.1f} Hz")
-             feedback_parts.append(f" - Voiced/Unvoiced indicator (Avg. ZCR): {tone.get('voiced/unvoiced indicator (mean ZCR)', 0):.3f}")
-             # Include MFCCs if added to _analyze_tone
-             # mfccs = tone.get('mean_mfccs')
-             # if mfccs:
-             #      feedback_parts.append(f"- Mean MFCCs (first 4): [{', '.join(f'{m:.2f}' for m in mfccs[:4])}, ...]") # Display first few
-        else:
-            feedback_parts.append("- Could not reliably analyze tone/timbre.")
-        feedback_parts.append("")
-
-
-        return "\n".join(feedback_parts)
-
-
-    def get_gemini_recommendations(self, feedback_text, context="general"):
-        """ Get recommendations from Gemini based on the feedback text and speaking context. """
+    def get_gemini_recommendations(self, analysis, context="general"):
 
         # Context-specific prompt modifications
         context_prompts = {
@@ -413,7 +303,7 @@ class VoiceAnalyzer:
         }
 
         context_addition = context_prompts.get(context, context_prompts["general"])
-
+        analysis_json = analysis
         api_key = "AIzaSyA4j6MyrkAuGqf8cf0dbNnfXYgz75GDq1g"
         if not api_key:
             return "Gemini recommendations unavailable (API key missing)."
@@ -423,11 +313,9 @@ class VoiceAnalyzer:
             model = genai.GenerativeModel('gemini-1.5-flash')
 
             prompt = (
-                f"Analyze the following voice analysis feedback and provide 5 concise, actionable recommendations "
-                f"for the speaker to improve their public speaking delivery. {context_addition} "
-                f"Focus on clarity, engagement, and addressing potential issues highlighted in the feedback "
-                f"(like pace, pauses, pitch monotony, volume). Present the recommendations as a numbered list.\n\n"
-                f"Feedback:\n{feedback_text}\n\nRecommendations:"
+                f"Analyze the following JSON voice metrics and give 5 concise, actionable recommendations "
+                            f"for improving public speaking. {context_addition}\n\n"
+                            f"Metrics:\n{analysis_json}\n\nRecommendations:"
             )
 
             # rest of your existing code stays the same
