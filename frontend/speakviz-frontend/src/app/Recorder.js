@@ -289,12 +289,6 @@ function Recorder() {
       <div>
         {(feedback || recommendations) && (
           <div className="analysis-result" style={{ marginTop: 20 }}>
-            {feedback && (
-              <>
-                <h3>Feedback</h3>
-                <p>{feedback}</p>
-              </>
-            )}
             {recommendations && (
               <>
                 <h3>Recommendations</h3>
