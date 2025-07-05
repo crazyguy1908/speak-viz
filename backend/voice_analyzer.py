@@ -121,15 +121,9 @@ class VoiceAnalyzer:
     
 
     def generate_feedback(self, analysis):
-        metrics = {
-                    'transcription': analysis.get('transcription'),
-                    'pitch': analysis.get('pitch'),
-                    'prosody': analysis.get('prosody'),
-                    'speed': analysis.get('speed'),
-                    'pauses': analysis.get('pauses'),
-                    'tone': analysis.get('tone')
-                }
-        return metrics
+        metrics = analysis
+        return (metrics)
+        print(metrics)
     
     def get_gemini_recommendations(self, analysis, context="general"):
 
