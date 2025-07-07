@@ -1,5 +1,6 @@
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 from fastapi.responses import JSONResponse
+from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel, HttpUrl
 import os
 import uuid
@@ -40,8 +41,14 @@ async def analyze_audio(file: UploadFile = File(...), context: str = Form("gener
 
     return JSONResponse({
         'feedback': feedback,
-        'recommendations': recommendations
+        'recommendations': recommendations,
+        'analysis': analysis,
     })
+
+
+
+
+
 
 @app.get("/")
 async def root():

@@ -14,7 +14,7 @@ class VoiceAnalyzer:
         print("Loading Whisper model...")
         self.whisper_model = None
         try:
-            self.whisper_model = whisper.load_model("base")
+            self.whisper_model = whisper.load_model("tiny")
             print("Whisper model loaded successfully.")
         except Exception as e:
             print(f"Error loading Whisper model: {e}")
@@ -123,7 +123,7 @@ class VoiceAnalyzer:
     def generate_feedback(self, analysis):
         metrics = analysis
         return (metrics)
-        print(metrics)
+        
     
     def get_gemini_recommendations(self, analysis, context="general"):
 
