@@ -97,7 +97,7 @@ class VoiceAnalyzer:
             'speed_wpm': speed_wpm,
             'pause_durations_s': pauses,
             'tone_score': float(tone_score),
-            'lld_features_mean': lld_df.mean().to_dict(),
+            'loudness': float(energy.mean()),
             'pitch_stats': pitch_stats
         }
         return analysis
@@ -118,13 +118,15 @@ class VoiceAnalyzer:
         except Exception as e:
             print(f"Pitch analysis error: {e}")
             return {}
-    
+
 
     def generate_feedback(self, analysis):
         metrics = analysis
+        print(analysis)
+        print(metrics)
         return (metrics)
-        
-    
+
+
     def get_gemini_recommendations(self, analysis, context="general"):
 
         # Context-specific prompt modifications
