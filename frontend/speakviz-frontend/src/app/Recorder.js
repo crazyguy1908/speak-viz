@@ -142,40 +142,64 @@ function Recorder() {
           if (detections.length) {
             const d = detections[0];
             const landmarks = d.landmarks;
+            const box = d.detection.box;
+            const boxCX = box.x + box.width * 0.5;
 
-            const w = video.videoWidth;
-            const h = video.videoHeight;
+            function avg(p1, p2) {
+              return [(p1.x + p2.x) * 0.5, (p1.y + p2.y) * 0.5];
+            }
 
-            const box        = d.detection.box;          
-            const boxCX      = box.x + box.width * 0.5;
+            function norm(val, min, max) {
+              return Math.max(0, Math.min(1, (val - min) / (max - min)));
+            }
 
-            /* key landmark refs */
-            const nose       = landmarks.getNose()[0];    
-            const Linner     = landmarks.getLeftEye()[0]; 
-            const Rinner     = landmarks.getRightEye()[3];
+            function gazeDirection(landmarks, box) {
+              const L = landmarks.getLeftEye();
+              const R = landmarks.getRightEye();
 
-            const headYaw = (nose.x - boxCX) / (box.width * 0.5);     // –1 … 1
+              const [lx, ly] = avg(L[0], L[3]);
+              const [rx, ry] = avg(R[0], R[3]);
 
-            const eyeMidX  = (Linner.x + Rinner.x) * 0.5;
-            const eyeWidth = Math.max(landmarks.getRightEye()[0].x - landmarks.getLeftEye()[3].x, 10);
-            const gazeYaw  = (eyeMidX - nose.x) / eyeWidth;       
+              const pupil = {
+                x: (lx + rx) * 0.5,
+                y: (ly + ry) * 0.5,
+              };
 
-            const HEAD_YAW_TOL = 0.30;   
-            const GAZE_YAW_TOL = 0.18;
+              const xMin = box.x;
+              const xMax = box.x + box.width;
+              const yMin = box.y;
+              const yMax = box.y + box.height;
 
-            const inEyeContact =
-                  Math.abs(headYaw) < HEAD_YAW_TOL &&
-                  Math.abs(gazeYaw) < GAZE_YAW_TOL;
+              const nx = norm(pupil.x, xMin, xMax);
+              const ny = norm(pupil.y, yMin, yMax);
+
+              if (ny < 0.30) {
+                return "UP";
+              }
+              if (nx < 0.38) {
+                return "RIGHT";
+              }
+              if (nx > 0.62) {
+                return "LEFT";
+              }
+              return "STRAIGHT";
+            }
+
+            const gaze = gazeDirection(landmarks, box);
+            const nose = landmarks.getNose()[0];
+
+            const headYaw = (nose.x - boxCX) / (box.width * 0.5);
+            const inEyeContact = gaze === "STRAIGHT" && Math.abs(headYaw) < 0.30;
 
             metrics.current.frames++;
             if (inEyeContact) metrics.current.eyeContactFrames++;
-
-            /* console.log(
-              `f${metrics.current.frames.toString().padStart(4)}  ` +
-              `headYaw=${headYaw.toFixed(2)}  ` +
-              `gazeYaw=${gazeYaw.toFixed(2)}  ` +
-              `eyeContact=${inEyeContact}`
-            ); */
+            
+            console.log(
+            `f${metrics.current.frames.toString().padStart(4)}  ` +
+            `gaze=${gaze.padEnd(8)}  ` +
+            `headYaw=${headYaw.toFixed(2)}  ` +
+            `eyeContact=${inEyeContact}`
+          );
 
           }
 
@@ -217,7 +241,7 @@ function Recorder() {
     // link.click();
     console.log(link);
     console.log(blobUrl);
-    reportEyeContact();
+    // reportEyeContact();
     analyzeWebmBlob(blob);
   };
 
