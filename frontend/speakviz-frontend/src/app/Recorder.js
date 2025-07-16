@@ -194,12 +194,6 @@ function Recorder() {
             metrics.current.frames++;
             if (inEyeContact) metrics.current.eyeContactFrames++;
             
-            console.log(
-            `f${metrics.current.frames.toString().padStart(4)}  ` +
-            `gaze=${gaze.padEnd(8)}  ` +
-            `headYaw=${headYaw.toFixed(2)}  ` +
-            `eyeContact=${inEyeContact}`
-          );
 
           }
 
