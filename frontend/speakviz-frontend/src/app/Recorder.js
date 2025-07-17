@@ -235,7 +235,7 @@ function Recorder() {
     // link.click();
     console.log(link);
     console.log(blobUrl);
-    // reportEyeContact();
+    reportEyeContact();
     analyzeWebmBlob(blob);
   };
 
