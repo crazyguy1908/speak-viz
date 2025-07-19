@@ -3,6 +3,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import { ReactMediaRecorder } from "react-media-recorder";
 import * as faceapi from "face-api.js";
+import { supabase } from './supabaseClient';
+
 const API_URL = "http://localhost:8000/analyze";
 
 function Recorder() {
@@ -237,6 +239,7 @@ function Recorder() {
     console.log(blobUrl);
     reportEyeContact();
     analyzeWebmBlob(blob);
+    uploadVideoToSupabase(mediaBlobUrl, user)
   };
 
   useEffect(() => {
@@ -247,6 +250,91 @@ function Recorder() {
 
     return () => idleStream?.getTracks().forEach((t) => t.stop());
   }, []);
+
+const [isUploading, setIsUploading] = useState(false);
+const [uploadSuccess, setUploadSuccess] = useState(false);
+const [error, setError] = useState(null);
+
+// Main upload function
+const uploadVideoToSupabase = async (mediaBlobUrl, user) => {
+  setIsUploading(true);
+  setError(null);
+  setUploadSuccess(false);
+  
+  try {
+    // Step 1: Convert blob URL to actual blob
+    const response = await fetch(mediaBlobUrl);
+    const blob = await response.blob();
+    
+    // Step 2: Generate unique filename
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const fileName = `video-${timestamp}.webm`;
+    const filePath = `${user.id}/${fileName}`;
+
+    // Step 3: Upload file to Supabase Storage
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from('videos') // Make sure this bucket exists in your Supabase storage
+      .upload(filePath, blob, {
+        contentType: 'video/webm',
+        upsert: false // Don't overwrite if file exists
+      });
+
+    if (uploadError) {
+      throw uploadError;
+    }
+
+    console.log('File uploaded successfully:', uploadData);
+
+    // Step 4: Get video duration (optional)
+    const videoDuration = await getVideoDuration(mediaBlobUrl);
+
+    // Step 5: Save video metadata to database
+    const { data: dbData, error: dbError } = await supabase
+      .from('videos') // Make sure this table exists
+      .insert([
+        {
+          user_id: user.id,
+          file_name: fileName,
+          file_path: filePath,
+          file_size: blob.size,
+          duration: videoDuration,
+          created_at: new Date().toISOString()
+        }
+      ])
+      .select();
+
+    if (dbError) {
+      throw dbError;
+    }
+
+    console.log('Video metadata saved:', dbData);
+    setUploadSuccess(true);
+    
+    // Clear success message after 3 seconds
+    setTimeout(() => setUploadSuccess(false), 3000);
+    
+  } catch (error) {
+    console.error('Upload error:', error);
+    setError(error.message);
+  } finally {
+    setIsUploading(false);
+  }
+};
+
+// Helper function to get video duration
+const getVideoDuration = (url) => {
+  return new Promise((resolve) => {
+    const video = document.createElement('video');
+    video.preload = 'metadata';
+    video.onloadedmetadata = () => {
+      resolve(video.duration);
+    };
+    video.onerror = () => {
+      resolve(null); // Return null if can't get duration
+    };
+    video.src = url;
+  });
+};
 
   return (
     <>
