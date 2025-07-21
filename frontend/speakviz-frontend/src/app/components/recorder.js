@@ -479,14 +479,10 @@ const getVideoDuration = (url) => {
       <div>
         <ReactMediaRecorder
           video
-<<<<<<< HEAD
-          onStop={handleDownload}
-=======
           onStop={(blobUrl, blob) => {
             handleDownload(blobUrl, blob);
             //uploadVideoToSupabase(blobUrl, user);
           }}
->>>>>>> 04fae97aacfcb2e8fa92ee2cb023d15b73dea740
           onStart={resetMetrics}
           render={({
             status,
