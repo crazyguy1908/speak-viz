@@ -1,8 +1,8 @@
 'use client'
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { supabase } from './supabaseClient';
-import Login from './components/Login';
+import Login from './components/landing';
+import { supabase } from './supabaseClient.js';
 
 export default function Home() {
   const [session, setSession] = useState(null);

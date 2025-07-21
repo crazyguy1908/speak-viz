@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { ReactMediaRecorder } from "react-media-recorder";
 import * as faceapi from "face-api.js";
-import { supabase } from '../supabaseClient';
+import { supabase } from '../../supabaseClient';
 
 const API_URL = "http://localhost:8000/analyze";
 

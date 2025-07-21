@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { supabase } from '../supabaseClient';
+import { supabase } from '../../supabaseClient';
 import Recorder from '../components/recorder';
 
 export default function RecorderPage() {

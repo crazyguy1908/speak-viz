@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { supabase } from '../supabaseClient';
+import { supabase } from '../../supabaseClient';
 import Login from '../components/landing';
 
 export default function LoginPage() {
