@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Login from './components/landing';
-import { supabase } from './supabaseClient.js';
+import { supabase } from '../supabaseClient.js';
 
 export default function Home() {
   const [session, setSession] = useState(null);

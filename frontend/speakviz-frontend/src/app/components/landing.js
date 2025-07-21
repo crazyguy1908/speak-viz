@@ -1,7 +1,7 @@
 'use client'
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from './supabaseClient';
+import { supabase } from '../../supabaseClient';
 const Login = () => {
   // Form state management
   const [email, setEmail] = useState('');
