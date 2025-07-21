@@ -485,6 +485,7 @@ const getVideoDuration = (url) => {
           onStart={resetMetrics}
           render={({
             status,
+            
             startRecording,
             stopRecording,
             mediaBlobUrl,
