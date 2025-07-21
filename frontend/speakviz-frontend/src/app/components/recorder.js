@@ -377,7 +377,6 @@ function Recorder({ user }) {
     console.log(blobUrl);
     reportEyeContact();
     analyzeWebmBlob(blob);
-    uploadVideoToSupabase(blob, user)
   };
 
   useEffect(() => {
@@ -394,14 +393,14 @@ const [uploadSuccess, setUploadSuccess] = useState(false);
 const [error, setError] = useState(null);
 
 // Main upload function
-const uploadVideoToSupabase = async (blob, user) => {
+const uploadVideoToSupabase = async (blobUrl, user) => {
   setIsUploading(true);
   setError(null);
   setUploadSuccess(false);
   
   try {
     // Step 1: Convert blob URL to actual blob
-    const response = await fetch(blob);
+    const response = await fetch(blobUrl);
     const blob = await response.blob();
     
     // Step 2: Generate unique filename
@@ -424,7 +423,7 @@ const uploadVideoToSupabase = async (blob, user) => {
     console.log('File uploaded successfully:', uploadData);
 
     // Step 4: Get video duration (optional)
-    const videoDuration = await getVideoDuration(blob);
+    const videoDuration = await getVideoDuration(blobUrl);
 
     // Step 5: Save video metadata to database
     const { data: dbData, error: dbError } = await supabase
@@ -479,7 +478,10 @@ const getVideoDuration = (url) => {
       <div>
         <ReactMediaRecorder
           video
-          onStop={handleDownload}
+          onStop={(blobUrl, blob) => {
+            handleDownload();
+            uploadVideoToSupabase(blobUrl, user);
+          }}
           onStart={resetMetrics}
           render={({
             status,
