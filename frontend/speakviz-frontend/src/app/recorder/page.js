@@ -3,11 +3,11 @@
 import React, { useState, useEffect, useRef } from "react";
 import { ReactMediaRecorder } from "react-media-recorder";
 import * as faceapi from "face-api.js";
-import { supabase } from './supabaseClient';
+import { supabase } from '../supabaseClient';
 
 const API_URL = "http://localhost:8000/analyze";
 
-function Recorder() {
+function Recorder({ user }) {
   const [idleStream, setIdleStream] = useState(null);
   const [analysis, setAnalysis] = useState("");
   const [feedback, setFeedback] = useState("");
@@ -394,14 +394,14 @@ const [uploadSuccess, setUploadSuccess] = useState(false);
 const [error, setError] = useState(null);
 
 // Main upload function
-const uploadVideoToSupabase = async (mediaBlobUrl, user) => {
+const uploadVideoToSupabase = async (blob, user) => {
   setIsUploading(true);
   setError(null);
   setUploadSuccess(false);
   
   try {
     // Step 1: Convert blob URL to actual blob
-    const response = await fetch(mediaBlobUrl);
+    const response = await fetch(blob);
     const blob = await response.blob();
     
     // Step 2: Generate unique filename
@@ -424,7 +424,7 @@ const uploadVideoToSupabase = async (mediaBlobUrl, user) => {
     console.log('File uploaded successfully:', uploadData);
 
     // Step 4: Get video duration (optional)
-    const videoDuration = await getVideoDuration(mediaBlobUrl);
+    const videoDuration = await getVideoDuration(blob);
 
     // Step 5: Save video metadata to database
     const { data: dbData, error: dbError } = await supabase
