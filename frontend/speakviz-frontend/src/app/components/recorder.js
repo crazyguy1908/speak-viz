@@ -479,13 +479,13 @@ const getVideoDuration = (url) => {
         <ReactMediaRecorder
           video
           onStop={(blobUrl, blob) => {
-            handleDownload();
+            handleDownload(blobUrl, blob);
             //uploadVideoToSupabase(blobUrl, user);
           }}
           onStart={resetMetrics}
           render={({
             status,
-            
+
             startRecording,
             stopRecording,
             mediaBlobUrl,
