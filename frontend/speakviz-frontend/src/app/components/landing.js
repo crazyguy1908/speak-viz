@@ -10,8 +10,7 @@ const Login = () => {
   const [error, setError] = useState(null);
   const [isSignUp, setIsSignUp] = useState(false); // Toggle between login/signup
   
-  const navigate = useNavigate();
-
+  
   // Handle form submission for both login and signup
   const handleSubmit = async (e) => {
     e.preventDefault();
