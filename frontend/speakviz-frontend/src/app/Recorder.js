@@ -239,7 +239,7 @@ function Recorder() {
     console.log(blobUrl);
     reportEyeContact();
     analyzeWebmBlob(blob);
-    uploadVideoToSupabase(mediaBlobUrl, user)
+    uploadVideoToSupabase(blob, user)
   };
 
   useEffect(() => {
