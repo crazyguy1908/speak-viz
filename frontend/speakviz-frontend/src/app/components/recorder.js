@@ -480,7 +480,7 @@ const getVideoDuration = (url) => {
           video
           onStop={(blobUrl, blob) => {
             handleDownload();
-            uploadVideoToSupabase(blobUrl, user);
+            //uploadVideoToSupabase(blobUrl, user);
           }}
           onStart={resetMetrics}
           render={({
