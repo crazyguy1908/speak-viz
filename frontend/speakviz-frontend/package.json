@@ -12,6 +12,7 @@
     "@supabase/supabase-js": "^2.52.0",
     "@tensorflow/tfjs-backend-webgl": "^4.22.0",
     "chart.js": "^4.5.0",
+    "encoding": "^0.1.13",
     "face-api.js": "^0.22.2",
     "faceapi": "^1.0.1",
     "next": "^15.3.3",
