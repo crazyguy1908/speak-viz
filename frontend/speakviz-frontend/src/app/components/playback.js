@@ -25,7 +25,7 @@ export default function MyVideosPage() {
     // 2. Fetch metadata
     const { data: rows, error: dbError } = await supabase
       .from('videos')
-      .select('id, file_path, file_name, duration, created_at')
+      .select('id, file_path, file_name, duration, created_at, recommendations')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false });
 
@@ -94,6 +94,7 @@ export default function MyVideosPage() {
               <strong>{vid.file_name}</strong><br/>
               Duration: {vid.duration ? vid.duration.toFixed(1) + 's' : '—'}<br/>
               Uploaded: {new Date(vid.created_at).toLocaleString()}
+              Feedback: {vid.recommendations ? vid.recommendations : 'None'}
             </p>
           </div>
         ))}
