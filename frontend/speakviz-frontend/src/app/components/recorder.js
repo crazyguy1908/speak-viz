@@ -202,7 +202,7 @@ const getVideoDuration = (url) => {
   });
 };
 
-const analyzeAndUploadVideo = async (blob, blobUrl, user) => {
+const analyzeAndUploadVideo = async (blob, blobUrl, user, faceAnalysis) => {
   setIsUploading(true);
   setError(null);
   setUploadSuccess(false);
@@ -212,6 +212,7 @@ const analyzeAndUploadVideo = async (blob, blobUrl, user) => {
     const formData = new FormData();
     formData.append("file", blob, "recording.webm");
     formData.append("context", selectedContext);
+    formData.append("faceAnalysis", faceAnalysis || ""); // Include face analysis if available
     
     const resp = await fetch(API_URL, {
       method: "POST",

@@ -127,7 +127,7 @@ class VoiceAnalyzer:
         return (metrics)
 
 
-    def get_gemini_recommendations(self, analysis, context="general"):
+    def get_gemini_recommendations(self, analysis, context="general", faceAnalysis=""):
 
         # Context-specific prompt modifications
         context_prompts = {
@@ -156,6 +156,7 @@ class VoiceAnalyzer:
                 f"Analyze the following JSON voice metrics and give 5 concise, actionable recommendations "
                             f"for improving public speaking. {context_addition}\n\n"
                             f"Metrics:\n{analysis_json}\n\nRecommendations:"
+                            f"{faceAnalysis}\n\n"
             )
 
             # rest of your existing code stays the same

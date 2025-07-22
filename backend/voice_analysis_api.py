@@ -20,7 +20,7 @@ UPLOAD_DIR = "./uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 @app.post("/analyze")
-async def analyze_audio(file: UploadFile = File(...), context: str = Form("general")):
+async def analyze_audio(file: UploadFile = File(...), context: str = Form("general"), faceAnalysis: str = Form("")):
     base_id = uuid.uuid4().hex
     webm_path = os.path.join(UPLOAD_DIR, f"{base_id}.webm")
     wav_path = os.path.join(UPLOAD_DIR, f"{base_id}.wav")
@@ -32,7 +32,7 @@ async def analyze_audio(file: UploadFile = File(...), context: str = Form("gener
         subprocess.run(["ffmpeg", "-y", "-i", webm_path, "-ar", "16000", "-ac", "1", wav_path], check=True)
         analysis = analyzer.analyze_audio(wav_path)
         feedback = analyzer.generate_feedback(analysis)
-        recommendations = analyzer.get_gemini_recommendations(analysis, context)
+        recommendations = analyzer.get_gemini_recommendations(analysis, context, faceAnalysis)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     finally:

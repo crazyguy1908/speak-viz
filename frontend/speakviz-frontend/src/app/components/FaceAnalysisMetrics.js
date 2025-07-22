@@ -94,6 +94,7 @@
 
   export function analyzeHeadOrientationSpread(metrics) {
     const m = metrics.current;
+    const [faceAnalysis, setFaceAnalysis] = useState("");
 
     if (m.yawHistory.length < 10) {
       console.log("Not enough data for analysis");
@@ -147,6 +148,16 @@
     console.log(`Classification: ${classification}`);
     console.log(`Explanation: ${explanation}`);
 
+    setFaceAnalysis("=== HEAD ORIENTATION SPREAD ANALYSIS ===" + `
+    Yaw Spread: ${yawSpread.toFixed(3)} (${isHighYawSpread ? 'HIGH' : 'normal'})
+    Pitch Spread: ${pitchSpread.toFixed(3)} (${isHighPitchSpread ? 'HIGH' : 'normal'})
+    Yaw Range: ${Math.min(...m.yawHistory).toFixed(2)} to ${Math.max(...m.yawHistory).toFixed(2)}
+    Pitch Range: ${Math.min(...m.pitchHistory).toFixed(2)} to ${Math.max(...m.pitchHistory).toFixed(2)}
+    Eye Contact Segments: ${m.eyeContactSegments.length} total (${goodSegments.length} good, ${badSegments.length} poor)
+    Classification: ${classification}
+    Explanation: ${explanation}
+  `);
+
     const visualizationData = {
       yawHistory: [...m.yawHistory],
       pitchHistory: [...m.pitchHistory],
@@ -163,7 +174,10 @@
 
     console.log("Visualization Data: ", visualizationData);
 
-    return visualizationData;
+    return {
+      faceAnalysis,
+      visualizationData
+    };
 
   }
 
