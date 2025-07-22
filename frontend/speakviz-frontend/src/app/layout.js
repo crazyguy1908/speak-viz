@@ -4,6 +4,8 @@ export const metadata = {
 }
 
 import './globals.css';
+import './components/recorder.css';
+import './components/landing.css';
 
 export default function RootLayout({ children }) {
   return (
