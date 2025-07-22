@@ -94,7 +94,7 @@
 
   export function analyzeHeadOrientationSpread(metrics) {
     const m = metrics.current;
-    const [faceAnalysis, setFaceAnalysis] = useState("");
+    let faceAnalysis = "";
 
     if (m.yawHistory.length < 10) {
       console.log("Not enough data for analysis");
@@ -148,7 +148,7 @@
     console.log(`Classification: ${classification}`);
     console.log(`Explanation: ${explanation}`);
 
-    setFaceAnalysis("=== HEAD ORIENTATION SPREAD ANALYSIS ===" + `
+    faceAnalysis = "=== HEAD ORIENTATION SPREAD ANALYSIS ===" + `
     Yaw Spread: ${yawSpread.toFixed(3)} (${isHighYawSpread ? 'HIGH' : 'normal'})
     Pitch Spread: ${pitchSpread.toFixed(3)} (${isHighPitchSpread ? 'HIGH' : 'normal'})
     Yaw Range: ${Math.min(...m.yawHistory).toFixed(2)} to ${Math.max(...m.yawHistory).toFixed(2)}
@@ -156,7 +156,7 @@
     Eye Contact Segments: ${m.eyeContactSegments.length} total (${goodSegments.length} good, ${badSegments.length} poor)
     Classification: ${classification}
     Explanation: ${explanation}
-  `);
+  `;
 
     const visualizationData = {
       yawHistory: [...m.yawHistory],
@@ -173,12 +173,7 @@
     };
 
     console.log("Visualization Data: ", visualizationData);
-
-    return {
-      faceAnalysis,
-      visualizationData
-    };
-
+    return faceAnalysis;
   }
 
   export function reportEyeContact(metrics) {
@@ -189,6 +184,5 @@
     const verdict = ratio >= 0.60 ? "Good eye contact!" : "Needs work (look at the lens more)";
 
     console.log(`Eye-contact ratio: ${eyeContactFrames}/${frames} = ${pct}% — ${verdict}`);
-
-    analyzeHeadOrientationSpread(metrics);
+     analyzeHeadOrientationSpread(metrics);
   }

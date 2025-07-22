@@ -21,6 +21,7 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 @app.post("/analyze")
 async def analyze_audio(file: UploadFile = File(...), context: str = Form("general"), faceAnalysis: str = Form("")):
+    print(f"Received file: {file.filename}, context: {context}, faceAnalysis: {faceAnalysis}")
     base_id = uuid.uuid4().hex
     webm_path = os.path.join(UPLOAD_DIR, f"{base_id}.webm")
     wav_path = os.path.join(UPLOAD_DIR, f"{base_id}.wav")

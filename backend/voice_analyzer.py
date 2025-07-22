@@ -153,7 +153,7 @@ class VoiceAnalyzer:
             model = genai.GenerativeModel('gemini-1.5-flash')
 
             prompt = (
-                f"Analyze the following JSON voice metrics and give 5 concise, actionable recommendations "
+                f"Analyze the following JSON voice metrics and give 5 concise, actionable recommendations. if you get face analysis, use it to improve the recommendations.\n\n"
                             f"for improving public speaking. {context_addition}\n\n"
                             f"Metrics:\n{analysis_json}\n\nRecommendations:"
                             f"{faceAnalysis}\n\n"
