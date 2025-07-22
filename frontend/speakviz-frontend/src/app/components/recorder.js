@@ -365,6 +365,7 @@ const [uploadSuccess, setUploadSuccess] = useState(false);
 const [error, setError] = useState(null);
 
 // Main upload function
+
 // Helper function to get video duration
 const getVideoDuration = (url) => {
   return new Promise((resolve) => {
