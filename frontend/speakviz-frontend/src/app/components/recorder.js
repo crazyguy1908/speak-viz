@@ -35,35 +35,7 @@ function Recorder({ user }) {
     { value: "storytelling", label: "Storytelling" },
     { value: "debate", label: "Debate/Discussion" },
   ];
-  async function analyzeWebmBlob(blob) {
-    const formData = new FormData();
-    formData.append("file", blob, "recording.webm");
-    formData.append("context", selectedContext);
 
-    try {
-      const resp = await fetch(API_URL, {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!resp.ok) {
-        // server-side error or CORS; dump the text for debugging
-        const text = await resp.text();
-        throw new Error(`Server responded ${resp.status}: ${text}`);
-      }
-
-      // parse the JSON _from this same response_
-      const data = await resp.json();
-      console.log("Analysis:", data.analysis);
-      console.log("Feedback:", data.feedback);
-      console.log("Recommendations:", data.recommendations);
-      setAnalysis(data.analysis);
-      setFeedback(data.feedback);
-      setRecommendations(data.recommendations);
-    } catch (err) {
-      console.error("analyzeWebmBlob error:", err);
-    }
-  }
 
   const resetMetrics = () => {
     metrics.current.frames = 0;
@@ -376,7 +348,7 @@ function Recorder({ user }) {
     console.log(link);
     console.log(blobUrl);
     reportEyeContact();
-    analyzeWebmBlob(blob);
+    analyzeAndUploadVideo(blob, blobUrl, user);
   };
 
   useEffect(() => {
@@ -393,71 +365,6 @@ const [uploadSuccess, setUploadSuccess] = useState(false);
 const [error, setError] = useState(null);
 
 // Main upload function
-const uploadVideoToSupabase = async (blobUrl, user) => {
-  setIsUploading(true);
-  setError(null);
-  setUploadSuccess(false);
-  
-  try {
-    // Step 1: Convert blob URL to actual blob
-    const response = await fetch(blobUrl);
-    const blob = await response.blob();
-    
-    // Step 2: Generate unique filename
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    const fileName = `video-${timestamp}.webm`;
-    const filePath = `${user.id}/${fileName}`;
-
-    // Step 3: Upload file to Supabase Storage
-    const { data: uploadData, error: uploadError } = await supabase.storage
-      .from('videos') // Make sure this bucket exists in your Supabase storage
-      .upload(filePath, blob, {
-        contentType: 'video/webm',
-        upsert: false // Don't overwrite if file exists
-      });
-
-    if (uploadError) {
-      throw uploadError;
-    }
-
-    console.log('File uploaded successfully:', uploadData);
-
-    // Step 4: Get video duration (optional)
-    const videoDuration = await getVideoDuration(blobUrl);
-
-    // Step 5: Save video metadata to database
-    const { data: dbData, error: dbError } = await supabase
-      .from('videos') // Make sure this table exists
-      .insert([
-        {
-          user_id: user.id,
-          file_name: fileName,
-          file_path: filePath,
-          file_size: blob.size,
-          duration: videoDuration,
-          created_at: new Date().toISOString()
-        }
-      ])
-      .select();
-
-    if (dbError) {
-      throw dbError;
-    }
-
-    console.log('Video metadata saved:', dbData);
-    setUploadSuccess(true);
-    
-    // Clear success message after 3 seconds
-    setTimeout(() => setUploadSuccess(false), 3000);
-    
-  } catch (error) {
-    console.error('Upload error:', error);
-    setError(error.message);
-  } finally {
-    setIsUploading(false);
-  }
-};
-
 // Helper function to get video duration
 const getVideoDuration = (url) => {
   return new Promise((resolve) => {
@@ -471,6 +378,91 @@ const getVideoDuration = (url) => {
     };
     video.src = url;
   });
+};
+
+const analyzeAndUploadVideo = async (blob, blobUrl, user) => {
+  setIsUploading(true);
+  setError(null);
+  setUploadSuccess(false);
+  
+  try {
+    // Step 1: Analyze the video first
+    const formData = new FormData();
+    formData.append("file", blob, "recording.webm");
+    formData.append("context", selectedContext);
+    
+    const resp = await fetch(API_URL, {
+      method: "POST",
+      body: formData,
+    });
+    
+    if (!resp.ok) {
+      const text = await resp.text();
+      throw new Error(`Server responded ${resp.status}: ${text}`);
+    }
+    
+    const analysisData = await resp.json();
+    console.log("Analysis:", analysisData.analysis);
+    console.log("Feedback:", analysisData.feedback);
+    console.log("Recommendations:", analysisData.recommendations);
+    
+    // Set the analysis state
+    setAnalysis(analysisData.analysis);
+    setFeedback(analysisData.feedback);
+    setRecommendations(analysisData.recommendations);
+    
+    // Step 2: Generate unique filename
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const fileName = `video-${timestamp}.webm`;
+    const filePath = `${user.id}/${fileName}`;
+    
+    // Step 3: Upload file to Supabase Storage
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from('videos')
+      .upload(filePath, blob, {
+        contentType: 'video/webm',
+        upsert: false
+      });
+    
+    if (uploadError) {
+      throw uploadError;
+    }
+    
+    console.log('File uploaded successfully:', uploadData);
+    
+    // Step 4: Get video duration
+    const videoDuration = await getVideoDuration(blobUrl);
+    
+    // Step 5: Save video metadata to database WITH recommendations
+    const { data: dbData, error: dbError } = await supabase
+      .from('videos')
+      .insert([
+        {
+          user_id: user.id,
+          file_name: fileName,
+          file_path: filePath,
+          file_size: blob.size,
+          duration: videoDuration,
+          recommendations: analysisData.recommendations, // Include recommendations
+          created_at: new Date().toISOString()
+        }
+      ])
+      .select();
+    
+    if (dbError) {
+      throw dbError;
+    }
+    
+    console.log('Video metadata saved:', dbData);
+    setUploadSuccess(true);
+    setTimeout(() => setUploadSuccess(false), 3000);
+    
+  } catch (error) {
+    console.error('Upload error:', error);
+    setError(error.message);
+  } finally {
+    setIsUploading(false);
+  }
 };
 
   return (
