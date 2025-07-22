@@ -126,7 +126,6 @@ function Recorder({ user }) {
             if (inEyeContact) metrics.current.eyeContactFrames++;
 
             FaceAnalysisMetrics.updateOrientationMetrics(yaw, pitch, inEyeContact, metrics, metrics.current.frames);
-            
 
           }
 
@@ -168,8 +167,9 @@ function Recorder({ user }) {
     // link.click();
     console.log(link);
     console.log(blobUrl);
+    const FaceMetrics = FaceAnalysisMetrics.analyzeHeadOrientationSpread(metrics);
     FaceAnalysisMetrics.reportEyeContact(metrics);
-    analyzeAndUploadVideo(blob, blobUrl, user);
+    analyzeAndUploadVideo(blob, blobUrl, user, FaceMetrics);
   };
 
   useEffect(() => {
@@ -202,7 +202,7 @@ const getVideoDuration = (url) => {
   });
 };
 
-const analyzeAndUploadVideo = async (blob, blobUrl, user) => {
+const analyzeAndUploadVideo = async (blob, blobUrl, user, FaceMetrics) => {
   setIsUploading(true);
   setError(null);
   setUploadSuccess(false);
@@ -212,7 +212,10 @@ const analyzeAndUploadVideo = async (blob, blobUrl, user) => {
     const formData = new FormData();
     formData.append("file", blob, "recording.webm");
     formData.append("context", selectedContext);
-    
+
+    formData.append("faceAnalysis", FaceMetrics || ""); // Include face analysis if available
+    console.log("Face Metrics:", FaceMetrics);
+
     const resp = await fetch(API_URL, {
       method: "POST",
       body: formData,
@@ -237,7 +240,7 @@ const analyzeAndUploadVideo = async (blob, blobUrl, user) => {
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
     const fileName = `video-${timestamp}.webm`;
     const filePath = `${user.id}/${fileName}`;
-    
+    /*
     // Step 3: Upload file to Supabase Storage
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from('videos')
@@ -249,7 +252,7 @@ const analyzeAndUploadVideo = async (blob, blobUrl, user) => {
     if (uploadError) {
       throw uploadError;
     }
-    
+  
     console.log('File uploaded successfully:', uploadData);
     
     // Step 4: Get video duration
@@ -278,7 +281,7 @@ const analyzeAndUploadVideo = async (blob, blobUrl, user) => {
     console.log('Video metadata saved:', dbData);
     setUploadSuccess(true);
     setTimeout(() => setUploadSuccess(false), 3000);
-    
+    */
   } catch (error) {
     console.error('Upload error:', error);
     setError(error.message);
