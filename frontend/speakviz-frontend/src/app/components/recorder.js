@@ -14,6 +14,7 @@ function Recorder({ user }) {
   const [feedback, setFeedback] = useState("");
   const [recommendations, setRecommendations] = useState("");
   const [selectedContext, setSelectedContext] = useState("general");
+  
   const landmarkStream = useRef([]);
   const metrics = useRef({
     frames: 0,
@@ -346,6 +347,9 @@ const analyzeAndUploadVideo = async (blob, blobUrl, user) => {
             </div>
           )}
         />
+      </div>
+      <div className="figs-container">
+        <p>Hi</p>
       </div>
       <div>
         {(feedback || recommendations) && (

@@ -266,3 +266,11 @@ h1 {
     width: 100%;
   }
 }
+
+/* Graphs Styling */
+
+.figs-container {
+    border: 1px solid;
+    border-radius: 10px;
+    
+}
