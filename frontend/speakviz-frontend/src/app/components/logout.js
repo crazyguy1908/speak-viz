@@ -3,8 +3,7 @@ import { supabase } from "@/supabaseClient";
 export default function Logout() {
     const handleLogout = async () => {
         await supabase.auth.signOut();
-        window.location.href = '/'; // Redirect to home page after logout
-        
+        window.location.href = '/'; 
     };
 
     return (
