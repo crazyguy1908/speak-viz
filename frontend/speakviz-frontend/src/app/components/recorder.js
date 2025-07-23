@@ -8,7 +8,7 @@ import * as FaceAnalysisMetrics from "./FaceAnalysisMetrics";
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title } from "chart.js";
 import annotationPlugin from 'chartjs-plugin-annotation';
 import { Doughnut, Line, Scatter } from "react-chartjs-2";
-
+import Logout from "./logout";
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement, BarElement, annotationPlugin, Title);
 
 
@@ -478,6 +478,9 @@ const analyzeAndUploadVideo = async (blob, blobUrl, user, FaceMetrics) => {
             )}
           </div>
         )}
+      </div>
+      <div>
+        <Logout />
       </div>
     </>
   );
