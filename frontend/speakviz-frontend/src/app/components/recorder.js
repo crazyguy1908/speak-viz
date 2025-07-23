@@ -5,10 +5,11 @@ import { ReactMediaRecorder } from "react-media-recorder";
 import * as faceapi from "face-api.js";
 import { supabase } from '../../supabaseClient';
 import * as FaceAnalysisMetrics from "./FaceAnalysisMetrics";
-import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement, Title } from "chart.js";
-import { Doughnut, Line } from "react-chartjs-2";
+import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title } from "chart.js";
+import annotationPlugin from 'chartjs-plugin-annotation';
+import { Doughnut, Line, Scatter } from "react-chartjs-2";
 
-ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement, Title);
+ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement, BarElement, annotationPlugin, Title);
 
 
 const API_URL = "http://localhost:8000/analyze";
@@ -359,82 +360,112 @@ const analyzeAndUploadVideo = async (blob, blobUrl, user, FaceMetrics) => {
       <div className="figs-container" style={{ width: '100%', height: '500px', margin: '20px 0' }}>
         <p>Head Movement Analysis</p>
         {metrics.current.yawHistory && metrics.current.yawHistory.length > 0 && (
-          <div style={{ width: '100%', height: '450px' }}>
-            <Line 
-              data={{
-                labels: metrics.current.yawHistory.map((_, index) => index),
-                datasets: [
-                  {
-                    label: 'Yaw Angle (Left/Right)',
-                    data: metrics.current.yawHistory,
-                    borderColor: 'rgb(75, 192, 192)',
-                    backgroundColor: 'rgba(75, 192, 192, 0.1)',
-                    borderWidth: 2,
-                    pointRadius: 1,
-                    pointHoverRadius: 4,
-                    tension: 0.2
-                  },
-                  {
-                    label: 'Pitch Angle (Up/Down)',
-                    data: metrics.current.pitchHistory,
-                    borderColor: 'rgb(255, 99, 132)',
-                    backgroundColor: 'rgba(255, 99, 132, 0.1)',
-                    borderWidth: 2,
-                    pointRadius: 1,
-                    pointHoverRadius: 4,
-                    tension: 0.2
-                  }
-                ]
-              }}
-              options={{
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                  legend: {
-                    position: 'top',
-                  },
-                  title: {
-                    display: true,
-                    text: 'Head Movement Over Time (Radians)',
-                    font: {
-                      size: 16
+          <>
+            <div style={{ width: '100%', height: '450px' }}>
+              <Line 
+                data={{
+                  labels: metrics.current.yawHistory.map((_, index) => index),
+                  datasets: [
+                    {
+                      label: 'Yaw Angle (Left/Right)',
+                      data: metrics.current.yawHistory,
+                      borderColor: 'rgb(75, 192, 192)',
+                      backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                      borderWidth: 2,
+                      pointRadius: 1,
+                      pointHoverRadius: 4,
+                      tension: 0.2
+                    },
+                    {
+                      label: 'Pitch Angle (Up/Down)',
+                      data: metrics.current.pitchHistory,
+                      borderColor: 'rgb(255, 99, 132)',
+                      backgroundColor: 'rgba(255, 99, 132, 0.1)',
+                      borderWidth: 2,
+                      pointRadius: 1,
+                      pointHoverRadius: 4,
+                      tension: 0.2
                     }
-                  }
-                },
-                scales: {
-                  y: {
-                    beginAtZero: false,
-                    min: -0.8,
-                    max: 0.8,
+                  ]
+                }}
+                options={{
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  plugins: {
+                    legend: {
+                      position: 'top',
+                    },
                     title: {
                       display: true,
-                      text: 'Angle (radians)'
-                    },
-                    grid: {
-                      color: 'rgba(0, 0, 0, 0.1)'
-                    },
-                    ticks: {
-                      stepSize: 0.2,
+                      text: 'Head Movement Over Time (Radians)',
+                      font: {
+                        size: 16
+                      }
                     }
                   },
-                  x: {
-                    title: {
-                      display: true,
-                      text: 'Frame Number'
+                  scales: {
+                    y: {
+                      beginAtZero: false,
+                      min: -0.8,
+                      max: 0.8,
+                      title: {
+                        display: true,
+                        text: 'Angle (radians)'
+                      },
+                      grid: {
+                        color: 'rgba(0, 0, 0, 0.1)'
+                      },
+                      ticks: {
+                        stepSize: 0.2,
+                      }
                     },
-                    grid: {
-                      color: 'rgba(0, 0, 0, 0.1)'
+                    x: {
+                      title: {
+                        display: true,
+                        text: 'Frame Number'
+                      },
+                      grid: {
+                        color: 'rgba(0, 0, 0, 0.1)'
+                      }
+                    }
+                  },
+                  interaction: {
+                    intersect: false,
+                    mode: 'index'
+                  }
+                }}
+              />
+            </div>
+            <div style={{ width: '100%', height: '450px' }}>
+              <Scatter 
+                data={{
+                  datasets: [{
+                      label: "Yaw-Pitch samples",
+                      data: metrics.current.yawHistory.map((yaw, i) => ({x: yaw, y: metrics.current.pitchHistory[i]})),
+                      pointBackgroundColor: 'rgb(75, 192, 192)',
+                      pointRadius: 3
+                    }]
+                }}
+                options={{
+                  plugins: {
+                    annotation: {
+                      annotations: {
+                        type: 'ellipse',
+                        xMin: FaceAnalysisMetrics.yawMean - FaceAnalysisMetrics.yawSpread,
+                        xMax: FaceAnalysisMetrics.yawMean + FaceAnalysisMetrics.yawSpread,
+                        yMin: FaceAnalysisMetrics.pitchMean - FaceAnalysisMetrics.pitchSpread,
+                        yMax: FaceAnalysisMetrics.pitchMean + FaceAnalysisMetrics.pitchSpread,
+                        backgroundColor: "rgba(99,102,241,.08)",
+                        borderWidth: 0
+                      }
                     }
                   }
-                },
-                interaction: {
-                  intersect: false,
-                  mode: 'index'
-                }
-              }}
-            />
-          </div>
+                }}
+              />
+            </div>
+          </>
         )}
+
       </div>
       <div>
         {(feedback || recommendations) && (
