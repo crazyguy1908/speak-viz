@@ -361,7 +361,7 @@ const analyzeAndUploadVideo = async (blob, blobUrl, user, FaceMetrics) => {
         <p>Head Movement Analysis</p>
         {metrics.current.yawHistory && metrics.current.yawHistory.length > 0 && (
           <>
-            <div style={{ width: '100%', height: '450px' }}>
+            <div style={{ width: '100%', height: '450px', margin: '10px' }}>
               <Line 
                 data={{
                   labels: metrics.current.yawHistory.map((_, index) => index),
@@ -436,32 +436,77 @@ const analyzeAndUploadVideo = async (blob, blobUrl, user, FaceMetrics) => {
                 }}
               />
             </div>
-            <div style={{ width: '100%', height: '450px' }}>
-              <Scatter 
-                data={{
-                  datasets: [{
-                      label: "Yaw-Pitch samples",
+
+            <div style={{ width: '100%', height: '450px', margin: '10px' }}>
+                <Scatter 
+                  data={{
+                    datasets: [{
+                      label: 'Yaw-Pitch samples',
                       data: metrics.current.yawHistory.map((yaw, i) => ({x: yaw, y: metrics.current.pitchHistory[i]})),
                       pointBackgroundColor: 'rgb(75, 192, 192)',
                       pointRadius: 3
                     }]
-                }}
-                options={{
-                  plugins: {
-                    annotation: {
-                      annotations: {
-                        type: 'ellipse',
-                        xMin: FaceAnalysisMetrics.yawMean - FaceAnalysisMetrics.yawSpread,
-                        xMax: FaceAnalysisMetrics.yawMean + FaceAnalysisMetrics.yawSpread,
-                        yMin: FaceAnalysisMetrics.pitchMean - FaceAnalysisMetrics.pitchSpread,
-                        yMax: FaceAnalysisMetrics.pitchMean + FaceAnalysisMetrics.pitchSpread,
-                        backgroundColor: "rgba(99,102,241,.08)",
-                        borderWidth: 0
+                  }}
+                  options={{
+                    responsive: true,
+                    plugins: {
+                      annotation: {
+                        annotations: {
+                          spreadEllipse: {
+                            type: 'ellipse',
+                            xMin: FaceAnalysisMetrics.yawMean - FaceAnalysisMetrics.yawSpread,
+                            xMax: FaceAnalysisMetrics.yawMean + FaceAnalysisMetrics.yawSpread,
+                            yMin: FaceAnalysisMetrics.pitchMean - FaceAnalysisMetrics.pitchSpread,
+                            yMax: FaceAnalysisMetrics.pitchMean + FaceAnalysisMetrics.pitchSpread,
+                            backgroundColor: 'rgba(99,102,241,.08)',
+                            borderWidth: 0
+                          }
+                        }
+                      }
+                    },
+                    scales: {
+                      y: {
+                        beginAtZero: false,
+                        min: -0.8,
+                        max: 0.8
+                      },
+                      x: {
+                        beginAtZero: false,
+                        min: -0.8,
+                        max: 0.8
                       }
                     }
-                  }
-                }}
-              />
+                  }}
+                />
+            </div>
+
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'space-around', 
+              marginTop: '10px',
+              padding: '10px',
+              backgroundColor: '#f8f9fa',
+              borderRadius: '8px',
+              fontSize: '14px'
+            }}>
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ fontWeight: 'bold', color: '#6b7280' }}>
+                  {Math.abs(Math.max(...metrics.current.yawHistory) - Math.min(...metrics.current.yawHistory)).toFixed(3)}
+                </div>
+                <div>Yaw Range</div>
+              </div>
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ fontWeight: 'bold', color: '#6b7280' }}>
+                  {Math.abs(Math.max(...metrics.current.pitchHistory) - Math.min(...metrics.current.pitchHistory)).toFixed(3)}
+                </div>
+                <div>Pitch Range</div>
+              </div>
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ fontWeight: 'bold', color: '#6b7280' }}>
+                  {metrics.current.yawHistory.length}
+                </div>
+                <div>Data Points</div>
+              </div>
             </div>
           </>
         )}
