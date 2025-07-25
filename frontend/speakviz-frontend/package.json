@@ -15,11 +15,8 @@
     "@tensorflow/tfjs-backend-webgl": "^4.22.0",
     "chart.js": "^4.5.0",
     "chartjs-plugin-annotation": "^3.1.0",
-<<<<<<< HEAD
-=======
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
->>>>>>> f2d99490ed835b1c2aa45b09ba5c8c28099c76ff
     "encoding": "^0.1.13",
     "face-api.js": "^0.22.2",
     "faceapi": "^1.0.1",
