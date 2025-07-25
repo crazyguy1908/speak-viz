@@ -3,6 +3,8 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '../../supabaseClient';
 import MyVideosPage from '../components/playback';
+import Navbar from '../components/navbar';
+
 export default function playbackPage() {
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -31,7 +33,14 @@ export default function playbackPage() {
   if (loading) return <div>Loading...</div>;
   if (!session) return <div>Redirecting to login...</div>;
 
-  return <MyVideosPage user={session.user} />;
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+      <Navbar />
+      <div className="container mx-auto px-4 py-12 flex flex-col items-center justify-center">
+        <MyVideosPage user={session.user} />
+      </div>
+    </div>
+  );
 }
 
 

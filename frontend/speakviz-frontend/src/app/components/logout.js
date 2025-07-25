@@ -1,4 +1,5 @@
 import { supabase } from "@/supabaseClient";
+import './logout.css';
 
 export default function Logout() {
     const handleLogout = async () => {
@@ -7,12 +8,8 @@ export default function Logout() {
     };
 
     return (
-        <div className="logout-container" style={{
-            position: 'fixed',
-            top: '20px',
-            left: '20px'
-        }}>
-            <button onClick={handleLogout} className="logout-button">
+        <div className="svz-logout-container">
+            <button onClick={handleLogout} className="svz-logout-btn">
                 Log Out
             </button>
         </div>

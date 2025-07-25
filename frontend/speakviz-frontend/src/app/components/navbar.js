@@ -8,30 +8,51 @@ import {
   NavigationMenuLink,
   NavigationMenuList,
   NavigationMenuTrigger,
-  navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu"
+
+import './navbar.css';
 
 export default function Navbar() {
   return (
-    <NavigationMenu>
-      <NavigationMenuList>
-        <NavigationMenuItem>
-          <NavigationMenuTrigger className={navigationMenuTriggerStyle()}>
-            Menu
-          </NavigationMenuTrigger>
-          <NavigationMenuContent>
-            <NavigationMenuLink asChild>
-              <Link href="/">Home</Link>
-            </NavigationMenuLink>
-            <NavigationMenuLink asChild>
-              <Link href="/playback">Playback</Link>
-            </NavigationMenuLink>
-            <NavigationMenuLink asChild>
-              <Link href="/recorder">Recorder</Link>
-            </NavigationMenuLink>
-          </NavigationMenuContent>
-        </NavigationMenuItem>
-      </NavigationMenuList>
-    </NavigationMenu>
+    <div className="svz-navbar-root">
+      <NavigationMenu className="svz-navbar-menu">
+        <NavigationMenuList>
+          <NavigationMenuItem>
+            {/* Only use our custom class, not shadcn's navigationMenuTriggerStyle */}
+            <NavigationMenuTrigger className="svz-navbar-trigger">
+              Menu
+            </NavigationMenuTrigger>
+            <NavigationMenuContent className="svz-navbar-dropdown">
+              <div className="svz-navbar-dropdown-list">
+                <NavigationMenuLink asChild>
+                  <Link 
+                    href="/" 
+                    className="svz-navbar-dropdown-link"
+                  >
+                    Home
+                  </Link>
+                </NavigationMenuLink>
+                <NavigationMenuLink asChild>
+                  <Link 
+                    href="/playback" 
+                    className="svz-navbar-dropdown-link"
+                  >
+                    Playback
+                  </Link>
+                </NavigationMenuLink>
+                <NavigationMenuLink asChild>
+                  <Link 
+                    href="/recorder" 
+                    className="svz-navbar-dropdown-link"
+                  >
+                    Recorder
+                  </Link>
+                </NavigationMenuLink>
+              </div>
+            </NavigationMenuContent>
+          </NavigationMenuItem>
+        </NavigationMenuList>
+      </NavigationMenu>
+    </div>
   );
 }

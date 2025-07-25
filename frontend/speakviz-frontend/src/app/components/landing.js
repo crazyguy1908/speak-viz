@@ -1,49 +1,33 @@
 'use client'
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useRouter } from 'next/navigation';
 import { supabase } from '../../supabaseClient';
-const Login = () => {
-  // Form state management
+import { Button } from '@/components/ui/button';
+import './landing-form.css';
+
+const SigninForm = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [isSignUp, setIsSignUp] = useState(false); // Toggle between login/signup
-  
-  
-  // Handle form submission for both login and signup
+  const [isSignUp, setIsSignUp] = useState(false);
+  const router = useRouter();
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
-
     try {
       let result;
-      
       if (isSignUp) {
-        // Sign up new user
-        result = await supabase.auth.signUp({
-          email,
-          password,
-        });
+        result = await supabase.auth.signUp({ email, password });
       } else {
-        // Sign in existing user
-        result = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
+        result = await supabase.auth.signInWithPassword({ email, password });
       }
-
-      // Check for errors
-      if (result.error) {
-        throw result.error;
-      }
-
-      // If successful and we have a session, navigate to recorder
+      if (result.error) throw result.error;
       if (result.data.session) {
-        navigate('/recorder');
+        router.push('/recorder');
       } else if (isSignUp) {
-        // For signup, user might need to confirm email
         alert('Please check your email to confirm your account');
       }
     } catch (error) {
@@ -54,16 +38,16 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="max-w-md w-full space-y-8">
+    <div className="svz-signin-root">
+      <div className="svz-signin-card">
         <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+          <h2 className="svz-signin-title">
             {isSignUp ? 'Create your account' : 'Sign in to your account'}
           </h2>
         </div>
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+        <form className="svz-signin-form" onSubmit={handleSubmit}>
           <div>
-            <label htmlFor="email" className="sr-only">Email</label>
+            <label htmlFor="email" className="svz-signin-label">Email</label>
             <input
               id="email"
               name="email"
@@ -71,12 +55,12 @@ const Login = () => {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="relative block w-full px-3 py-2 border border-gray-300 rounded-md"
+              className="svz-signin-input"
               placeholder="Email address"
             />
           </div>
           <div>
-            <label htmlFor="password" className="sr-only">Password</label>
+            <label htmlFor="password" className="svz-signin-label">Password</label>
             <input
               id="password"
               name="password"
@@ -84,34 +68,27 @@ const Login = () => {
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="relative block w-full px-3 py-2 border border-gray-300 rounded-md"
+              className="svz-signin-input"
               placeholder="Password"
             />
           </div>
-          
-          {/* Display error messages */}
           {error && (
-            <div className="text-red-600 text-sm text-center">
-              {error}
-            </div>
+            <div className="svz-signin-error">{error}</div>
           )}
-
           <div>
-            <button
+            <Button
               type="submit"
               disabled={loading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+              className="svz-signin-btn"
             >
               {loading ? 'Loading...' : (isSignUp ? 'Sign Up' : 'Sign In')}
-            </button>
+            </Button>
           </div>
-          
-          {/* Toggle between login and signup */}
-          <div className="text-center">
+          <div className="svz-signin-toggle-wrap">
             <button
               type="button"
               onClick={() => setIsSignUp(!isSignUp)}
-              className="text-indigo-600 hover:text-indigo-500"
+              className="svz-signin-toggle"
             >
               {isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
             </button>
@@ -122,4 +99,4 @@ const Login = () => {
   );
 };
 
-export default Login;
+export default SigninForm;

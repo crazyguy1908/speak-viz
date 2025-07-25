@@ -1,0 +1,80 @@
+/* SpeakViz Navbar Styles - moved from Tailwind classes in navbar.js */
+
+.svz-navbar-root {
+  position: fixed;
+  top: 1.5rem;
+  right: 2rem;
+  z-index: 100;
+}
+.svz-navbar-menu {
+  background: rgba(255,255,255,0.98);
+  border-radius: 0.75rem;
+  box-shadow: 0 4px 24px rgba(30, 64, 175, 0.10);
+  padding: 0.25rem 0.5rem;
+  border: 1px solid #e5e7eb;
+}
+.svz-navbar-trigger {
+  font-size: 1.125rem;
+  font-weight: 700;
+  background: #fff;
+  border: 1.5px solid #e5e7eb;
+  color: #6366f1;
+  padding: 0.75rem 2rem;
+  border-radius: 0.75rem;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.10);
+  transition: background 0.2s, color 0.2s, box-shadow 0.2s, transform 0.1s, border 0.2s;
+}
+.svz-navbar-trigger:hover {
+  background: #f3f4f6;
+  color: #7c3aed;
+  border-color: #a21caf;
+  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.18);
+  transform: translateY(-2px) scale(1.03);
+}
+.svz-navbar-dropdown {
+  min-width: 250px;
+  background: #fff;
+  border-radius: 0.75rem;
+  box-shadow: 0 8px 32px rgba(30, 64, 175, 0.12);
+  padding: 1.25rem 0.75rem;
+  margin-top: 0.5rem;
+  border: 1px solid #e5e7eb;
+}
+.svz-navbar-dropdown-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.svz-navbar-dropdown-link {
+  display: block;
+  padding: 1rem 2.5rem;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1e293b;
+  border-radius: 0.5rem;
+  text-decoration: none;
+  text-align: center;
+  transition: background 0.2s, color 0.2s;
+  margin-bottom: 0.25rem;
+}
+.svz-navbar-dropdown-link:last-child {
+  margin-bottom: 0;
+}
+.svz-navbar-dropdown-link:hover {
+  background: #f3f4f6;
+  color: #6366f1;
+}
+@media (max-width: 600px) {
+  .svz-navbar-root {
+    right: 0.5rem;
+    top: 0.5rem;
+  }
+  .svz-navbar-menu {
+    padding: 0.25rem;
+  }
+  .svz-navbar-dropdown-link {
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+  }
+}

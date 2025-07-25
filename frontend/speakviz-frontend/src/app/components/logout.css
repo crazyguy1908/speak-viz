@@ -1,0 +1,22 @@
+/* SpeakViz Logout Button Styles - moved from logout.js */
+
+.svz-logout-container {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+}
+.svz-logout-btn {
+  background: #ef4444;
+  color: #fff;
+  border: none;
+  border-radius: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.15);
+  transition: background 0.2s;
+}
+.svz-logout-btn:hover {
+  background: #dc2626;
+} 

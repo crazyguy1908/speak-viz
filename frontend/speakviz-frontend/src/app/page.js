@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Login from './components/landing';
 import { supabase } from '../supabaseClient.js';
+import SpeakVizLanding from './components/home';
 
 export default function Home() {
   const [session, setSession] = useState(null);
@@ -24,7 +25,7 @@ export default function Home() {
       if (session) {
         router.push('/recorder');
       } else {
-        router.push('/');
+        router.push('/homepage');
       }
     });
 

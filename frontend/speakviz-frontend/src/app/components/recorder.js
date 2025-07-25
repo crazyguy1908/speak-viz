@@ -11,6 +11,8 @@ import { Doughnut, Line, Scatter } from "react-chartjs-2";
 import Logout from "./logout";
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement, BarElement, annotationPlugin, Title);
 import Navbar from "./navbar";
+import { Card, CardContent } from "@/components/ui/card";
+import './recorder.css';
 
 const API_URL = "http://localhost:8000/analyze";
 
@@ -154,11 +156,11 @@ function Recorder({ user }) {
       return null;
     }
     return (
-      <div style={{ position: "relative" }}>
+      <div className="svz-video-preview-wrapper">
         <video className={className} ref={videoRef} autoPlay muted />
         <canvas
           ref={canvasRef}
-          style={{ position: "absolute", inset: 0, pointerEvents: "none" }}
+          className="svz-video-preview-canvas"
         />
       </div>
     );
@@ -299,189 +301,195 @@ const analyzeAndUploadVideo = async (blob, blobUrl, user, FaceMetrics) => {
 
   return (
     <>
-      <div>
+      <div className="svz-recorder-root">
         <Navbar />
-        <ReactMediaRecorder
-          video
-          onStop={(blobUrl, blob) => {
-            handleDownload(blobUrl, blob);
-            //uploadVideoToSupabase(blobUrl, user);
-          }}
-          onStart={resetMetrics}
-          render={({
-            status,
-
-            startRecording,
-            stopRecording,
-            mediaBlobUrl,
-            previewStream,
-          }) => (
-            <div className="recorder-container">
-              <h1>{status}</h1>
-              <div className="context-selector" style={{ marginBottom: 20 }}>
-                <label htmlFor="context-select">Speaking Context: </label>
-                <select
-                  id="context-select"
-                  value={selectedContext}
-                  onChange={(e) => setSelectedContext(e.target.value)}
-                  style={{ marginLeft: 10, padding: 5 }}
-                >
-                  {contexts.map((context) => (
-                    <option key={context.value} value={context.value}>
-                      {context.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              {status === "stopped" && mediaBlobUrl ? (
-                <video
-                  className="video-player"
-                  src={mediaBlobUrl}
-                  controls
-                  autoPlay
-                  loop
+        <div className="svz-recorder-container">
+          <div className="svz-recorder-card-wrap">
+            <Card className="svz-recorder-card">
+              <CardContent className="svz-recorder-card-content">
+                <ReactMediaRecorder
+                  video
+                  onStop={(blobUrl, blob) => {
+                    handleDownload(blobUrl, blob);
+                  }}
+                  onStart={resetMetrics}
+                  render={({
+                    status,
+                    startRecording,
+                    stopRecording,
+                    mediaBlobUrl,
+                    previewStream,
+                  }) => (
+                    <div className="svz-recorder-main">
+                      <h1 className="svz-recorder-status">{status}</h1>
+                      <div className="svz-recorder-context">
+                        <label htmlFor="context-select">Speaking Context: </label>
+                        <select
+                          id="context-select"
+                          value={selectedContext}
+                          onChange={(e) => setSelectedContext(e.target.value)}
+                          className="svz-recorder-context-select"
+                        >
+                          {contexts.map((context) => (
+                            <option key={context.value} value={context.value}>
+                              {context.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      {status === "stopped" && mediaBlobUrl ? (
+                        <video
+                          className="svz-recorder-video-player"
+                          src={mediaBlobUrl}
+                          controls
+                          autoPlay
+                          loop
+                        />
+                      ) : (
+                        <VideoPreview
+                          className={
+                            status === "idle" ? "svz-recorder-video-player" : "svz-recorder-video-preview"
+                          }
+                          stream={status === "idle" ? idleStream : previewStream}
+                          detect={status === "recording"}
+                        />
+                      )}
+                      <div className="svz-recorder-controls">
+                        <button className="svz-recorder-start-btn" onClick={startRecording} disabled={status === "recording" ? true : false}>Start Recording</button>
+                        <button className="svz-recorder-stop-btn" onClick={stopRecording} disabled={status == "idle" ? true : false}>Stop Recording</button>
+                      </div>
+                    </div>
+                  )}
                 />
-              ) : (
-                <VideoPreview
-                  className={
-                    status === "idle" ? "video-player" : "video-preview-player"
-                  }
-                  stream={status === "idle" ? idleStream : previewStream}
-                  detect={status === "recording"}
-                />
+              </CardContent>
+            </Card>
+            <div className="svz-recorder-figs-container">
+              <p className="svz-recorder-figs-title">Head Movement Analysis</p>
+              {metrics.current.yawHistory && metrics.current.yawHistory.length > 0 && (
+                <>
+                  <div className="svz-recorder-figs-chart">
+                    <Line 
+                      data={{
+                        labels: metrics.current.yawHistory.map((_, index) => index),
+                        datasets: [
+                          {
+                            label: 'Yaw Angle (Left/Right)',
+                            data: metrics.current.yawHistory,
+                            borderColor: 'rgb(75, 192, 192)',
+                            backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                            borderWidth: 2,
+                            pointRadius: 1,
+                            pointHoverRadius: 4,
+                            tension: 0.2
+                          },
+                          {
+                            label: 'Pitch Angle (Up/Down)',
+                            data: metrics.current.pitchHistory,
+                            borderColor: 'rgb(255, 99, 132)',
+                            backgroundColor: 'rgba(255, 99, 132, 0.1)',
+                            borderWidth: 2,
+                            pointRadius: 1,
+                            pointHoverRadius: 4,
+                            tension: 0.2
+                          }
+                        ]
+                      }}
+                      options={{
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                          legend: {
+                            position: 'top',
+                          },
+                          title: {
+                            display: true,
+                            text: 'Head Movement Over Time (Radians)',
+                            font: {
+                              size: 16
+                            }
+                          }
+                        },
+                        scales: {
+                          y: {
+                            beginAtZero: false,
+                            min: -0.8,
+                            max: 0.8,
+                            title: {
+                              display: true,
+                              text: 'Angle (radians)'
+                            },
+                            grid: {
+                              color: 'rgba(0, 0, 0, 0.1)'
+                            },
+                            ticks: {
+                              stepSize: 0.2,
+                            }
+                          },
+                          x: {
+                            title: {
+                              display: true,
+                              text: 'Frame Number'
+                            },
+                            grid: {
+                              color: 'rgba(0, 0, 0, 0.1)'
+                            }
+                          }
+                        },
+                        interaction: {
+                          intersect: false,
+                          mode: 'index'
+                        }
+                      }}
+                    />
+                  </div>
+                  <div className="svz-recorder-figs-chart">
+                    <Scatter 
+                      data={{
+                        datasets: [{
+                            label: "Yaw-Pitch samples",
+                            data: metrics.current.yawHistory.map((yaw, i) => ({x: yaw, y: metrics.current.pitchHistory[i]})),
+                            pointBackgroundColor: 'rgb(75, 192, 192)',
+                            pointRadius: 3
+                          }]
+                      }}
+                      options={{
+                        plugins: {
+                          annotation: {
+                            annotations: {
+                              type: 'ellipse',
+                              xMin: FaceAnalysisMetrics.yawMean - FaceAnalysisMetrics.yawSpread,
+                              xMax: FaceAnalysisMetrics.yawMean + FaceAnalysisMetrics.yawSpread,
+                              yMin: FaceAnalysisMetrics.pitchMean - FaceAnalysisMetrics.pitchSpread,
+                              yMax: FaceAnalysisMetrics.pitchMean + FaceAnalysisMetrics.pitchSpread,
+                              backgroundColor: "rgba(99,102,241,.08)",
+                              borderWidth: 0
+                            }
+                          }
+                        }
+                      }}
+                    />
+                  </div>
+                </>
               )}
-              <div className="controls">
-                <button className="start-button" onClick={startRecording} disabled={status === "recording" ? true : false}>Start Recording</button>
-                <button className="stop-button" onClick={stopRecording} disabled={status == "idle" ? true : false}>Stop Recording</button>
-              </div>
-            </div>
-          )}
-        />
-      </div>
-      <div className="figs-container" style={{ width: '100%', height: '500px', margin: '20px 0' }}>
-        <p>Head Movement Analysis</p>
-        {metrics.current.yawHistory && metrics.current.yawHistory.length > 0 && (
-          <>
-            <div style={{ width: '100%', height: '450px' }}>
-              <Line 
-                data={{
-                  labels: metrics.current.yawHistory.map((_, index) => index),
-                  datasets: [
-                    {
-                      label: 'Yaw Angle (Left/Right)',
-                      data: metrics.current.yawHistory,
-                      borderColor: 'rgb(75, 192, 192)',
-                      backgroundColor: 'rgba(75, 192, 192, 0.1)',
-                      borderWidth: 2,
-                      pointRadius: 1,
-                      pointHoverRadius: 4,
-                      tension: 0.2
-                    },
-                    {
-                      label: 'Pitch Angle (Up/Down)',
-                      data: metrics.current.pitchHistory,
-                      borderColor: 'rgb(255, 99, 132)',
-                      backgroundColor: 'rgba(255, 99, 132, 0.1)',
-                      borderWidth: 2,
-                      pointRadius: 1,
-                      pointHoverRadius: 4,
-                      tension: 0.2
-                    }
-                  ]
-                }}
-                options={{
-                  responsive: true,
-                  maintainAspectRatio: false,
-                  plugins: {
-                    legend: {
-                      position: 'top',
-                    },
-                    title: {
-                      display: true,
-                      text: 'Head Movement Over Time (Radians)',
-                      font: {
-                        size: 16
-                      }
-                    }
-                  },
-                  scales: {
-                    y: {
-                      beginAtZero: false,
-                      min: -0.8,
-                      max: 0.8,
-                      title: {
-                        display: true,
-                        text: 'Angle (radians)'
-                      },
-                      grid: {
-                        color: 'rgba(0, 0, 0, 0.1)'
-                      },
-                      ticks: {
-                        stepSize: 0.2,
-                      }
-                    },
-                    x: {
-                      title: {
-                        display: true,
-                        text: 'Frame Number'
-                      },
-                      grid: {
-                        color: 'rgba(0, 0, 0, 0.1)'
-                      }
-                    }
-                  },
-                  interaction: {
-                    intersect: false,
-                    mode: 'index'
-                  }
-                }}
-              />
-            </div>
-            <div style={{ width: '100%', height: '450px' }}>
-              <Scatter 
-                data={{
-                  datasets: [{
-                      label: "Yaw-Pitch samples",
-                      data: metrics.current.yawHistory.map((yaw, i) => ({x: yaw, y: metrics.current.pitchHistory[i]})),
-                      pointBackgroundColor: 'rgb(75, 192, 192)',
-                      pointRadius: 3
-                    }]
-                }}
-                options={{
-                  plugins: {
-                    annotation: {
-                      annotations: {
-                        type: 'ellipse',
-                        xMin: FaceAnalysisMetrics.yawMean - FaceAnalysisMetrics.yawSpread,
-                        xMax: FaceAnalysisMetrics.yawMean + FaceAnalysisMetrics.yawSpread,
-                        yMin: FaceAnalysisMetrics.pitchMean - FaceAnalysisMetrics.pitchSpread,
-                        yMax: FaceAnalysisMetrics.pitchMean + FaceAnalysisMetrics.pitchSpread,
-                        backgroundColor: "rgba(99,102,241,.08)",
-                        borderWidth: 0
-                      }
-                    }
-                  }
-                }}
-              />
-            </div>
-          </>
-        )}
 
-      </div>
-      <div>
-        {(feedback || recommendations) && (
-          <div className="analysis-result" style={{ marginTop: 20 }}>
-            {recommendations && (
-              <>
-                <h3>Recommendations</h3>
-                <p>{recommendations}</p>
-              </>
-            )}
+            </div>
+            <div>
+              {(feedback || recommendations) && (
+                <div className="svz-recorder-analysis-result">
+                  {recommendations && (
+                    <>
+                      <h3>Recommendations</h3>
+                      <p>{recommendations}</p>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+            <div className="svz-recorder-logout-wrap">
+              <Logout />
+            </div>
           </div>
-        )}
-      </div>
-      <div>
-        <Logout />
+        </div>
       </div>
     </>
   );
