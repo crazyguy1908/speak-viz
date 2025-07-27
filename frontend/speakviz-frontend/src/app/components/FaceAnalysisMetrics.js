@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title } from "chart.js";
 import annotationPlugin from 'chartjs-plugin-annotation';
+import zoomPlugin from 'chartjs-plugin-zoom';
 import { Doughnut, Line, Scatter } from "react-chartjs-2";
 import './FaceMetricVisualizations.css';
 
-ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement, BarElement, annotationPlugin, Title);
+ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement, BarElement, annotationPlugin, zoomPlugin, Title);
 
 
 
@@ -360,6 +361,13 @@ export function calculateHeadOrientation(landmarks, box) {
                                 responsive: true,
                                 maintainAspectRatio: false,
                                 plugins: {
+                                    zoom: {
+                                      zoom: {
+                                        wheel: {
+                                          enabled: true,
+                                        }
+                                      }
+                                    },
                                     legend: {
                                         position: 'top',
                                         labels: {
@@ -466,12 +474,20 @@ export function calculateHeadOrientation(landmarks, box) {
 
             <div className="stats-summary">
                 <div className="stat-item">
-                    <span className="stat-label">Yaw Spread:</span>
+                    <span className="stat-label">Yaw Spread</span>
                     <span className="stat-value">{yawSpread.toFixed(3)}</span>
                 </div>
                 <div className="stat-item">
-                    <span className="stat-label">Pitch Spread:</span>
+                    <span className="stat-label">Pitch Spread</span>
                     <span className="stat-value">{pitchSpread.toFixed(3)}</span>
+                </div>
+                <div className="stat-item">
+                  <span className="stat-label">Yaw Mean</span>
+                  <span className="stat-value">{yawMean.toFixed(3)}</span>
+                </div>
+                <div className="stat-item">
+                  <span className="stat-label">Pitch Mean</span>
+                  <span className="stat-value">{pitchMean.toFixed(3)}</span>
                 </div>
             </div>
         </div>
