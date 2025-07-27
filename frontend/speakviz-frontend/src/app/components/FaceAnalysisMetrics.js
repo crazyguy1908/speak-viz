@@ -1,3 +1,12 @@
+import React, { useState, useEffect, useRef } from "react";
+import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title } from "chart.js";
+import annotationPlugin from 'chartjs-plugin-annotation';
+import { Doughnut, Line, Scatter } from "react-chartjs-2";
+import './FaceMetricVisualizations.css';
+
+ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement, BarElement, annotationPlugin, Title);
+
+
 
   export function avg(p1, p2) {
     return [(p1.x + p2.x) * 0.5, (p1.y + p2.y) * 0.5];
@@ -39,25 +48,26 @@
     return "STRAIGHT";
   }
 
-  export function calculateHeadOrientation(landmarks, box) {
-    const nose = landmarks.getNose()[0];
-    const leftEye = landmarks.getLeftEye();
-    const rightEye = landmarks.getRightEye();
+export function calculateHeadOrientation(landmarks, box) {
+  const nose = landmarks.getNose()[0];
+  const leftEye = landmarks.getLeftEye();
+  const rightEye = landmarks.getRightEye();
 
-    const eyeCenterX = (leftEye[0].x + leftEye[3].x + rightEye[0].x + rightEye[3].x) / 4;
-    const eyeCenterY = (leftEye[0].y + leftEye[3].y + rightEye[0].y + rightEye[3].y) / 4;
+  const eyeCenterX = (leftEye[0].x + leftEye[3].x + rightEye[0].x + rightEye[3].x) / 4;
+  const eyeCenterY = (leftEye[0].y + leftEye[3].y + rightEye[0].y + rightEye[3].y) / 4;
 
-    const boxCenterX = box.x + box.width * 0.5;
-    
-    // Yaw: Horizontal rotation of the head (left to right)
-    const yaw = (nose.x - boxCenterX) / (box.width * 0.5);
+  const boxCenterX = box.x + box.width * 0.5;
+  const boxCenterY = box.y + box.height * 0.5;
 
-    // Pitch: Vertical rotation of the head (up to down)
-    const pitchRaw = (nose.y - eyeCenterY) / box.height;
-    const pitch = Math.max(-0.5, Math.min(0.5, pitchRaw));
+  const yaw = (nose.x - boxCenterX) / (box.width * 0.5);
+  
+  const pitch = (nose.y - boxCenterY) / (box.height * 0.5);
+  
+  const clampedYaw = Math.max(-1, Math.min(1, yaw));
+  const clampedPitch = Math.max(-1, Math.min(1, pitch));
 
-    return { yaw, pitch };
-  }
+  return { yaw: clampedYaw, pitch: clampedPitch };
+}
 
   export function updateOrientationMetrics(yaw, pitch, isEyeContact, metrics, frameNumber) {
     const m = metrics.current;
@@ -173,7 +183,9 @@
     };
 
     console.log("Visualization Data: ", visualizationData);
-    return faceAnalysis;
+    
+    return { yawMean, yawSpread, pitchMean, pitchSpread, faceAnalysis };
+    
   }
 
   export function reportEyeContact(metrics) {
@@ -186,3 +198,282 @@
     console.log(`Eye-contact ratio: ${eyeContactFrames}/${frames} = ${pct}% — ${verdict}`);
      analyzeHeadOrientationSpread(metrics);
   }
+
+  {/* FACE METRICS GRAPHS AND VISUALIZATIONS */}
+
+  export default function FaceMetricVisualizations({ metrics }) {
+    const [selectedChart, setSelectedChart] = useState('line');
+
+    const stats = React.useMemo(
+        () => analyzeHeadOrientationSpread(metrics),
+        [metrics.current.yawHistory.length,
+         metrics.current.pitchHistory.length]
+    );
+
+    if (!stats) {
+        return null;
+    }
+
+    const { yawMean, yawSpread, pitchMean, pitchSpread } = stats;
+
+    return (
+        <div className="svz-recorder-figs-container">
+            <div className="section-header">
+                <p className="svz-recorder-figs-title">Head Movement Analysis</p>
+                <div className="chart-selector">
+                    <button 
+                        className={`selector-btn ${selectedChart === 'line' ? 'active' : ''}`}
+                        onClick={() => setSelectedChart('line')}
+                    >
+                        Time Series
+                    </button>
+                    <button 
+                        className={`selector-btn ${selectedChart === 'scatter' ? 'active' : ''}`}
+                        onClick={() => setSelectedChart('scatter')}
+                    >
+                        Distribution
+                    </button>
+                </div>
+            </div>
+
+            {metrics.current.yawHistory && metrics.current.yawHistory.length > 0 && (
+                <div className="svz-recorder-figs-chart">
+                    {selectedChart === 'line' ? (
+                        <Line 
+                            data={{
+                                labels: metrics.current.yawHistory.map((_, index) => index),
+                                datasets: [
+                                    {
+                                        label: 'Yaw Angle (Left/Right)',
+                                        data: metrics.current.yawHistory,
+                                        borderColor: '#06b6d4',
+                                        backgroundColor: 'rgba(6, 182, 212, 0.1)',
+                                        borderWidth: 2,
+                                        pointRadius: 2,
+                                        pointHoverRadius: 5,
+                                        tension: 0.3
+                                    },
+                                    {
+                                        label: 'Pitch Angle (Up/Down)',
+                                        data: metrics.current.pitchHistory,
+                                        borderColor: '#f59e0b',
+                                        backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                                        borderWidth: 2,
+                                        pointRadius: 2,
+                                        pointHoverRadius: 5,
+                                        tension: 0.3
+                                    }
+                                ]
+                            }}
+                            options={{
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: {
+                                    legend: {
+                                        position: 'top',
+                                        labels: {
+                                            font: {
+                                                size: 12,
+                                                family: 'Inter, system-ui, sans-serif'
+                                            },
+                                            padding: 20
+                                        }
+                                    },
+                                    title: {
+                                        display: true,
+                                        text: 'Head Movement Over Time',
+                                        font: {
+                                            size: 16,
+                                            weight: 'bold',
+                                            family: 'Inter, system-ui, sans-serif'
+                                        },
+                                        padding: {
+                                            top: 10,
+                                            bottom: 20
+                                        }
+                                    }
+                                },
+                                scales: {
+                                    y: {
+                                        beginAtZero: false,
+                                        min: -1,
+                                        max: 1,
+                                        title: {
+                                            display: true,
+                                            text: 'Angle (normalized)',
+                                            font: {
+                                                size: 12,
+                                                family: 'Inter, system-ui, sans-serif'
+                                            }
+                                        },
+                                        grid: {
+                                            color: 'rgba(0, 0, 0, 0.08)',
+                                            lineWidth: 1
+                                        },
+                                        ticks: {
+                                            stepSize: 0.4,
+                                            font: {
+                                                size: 11
+                                            }
+                                        }
+                                    },
+                                    x: {
+                                        title: {
+                                            display: true,
+                                            text: 'Frame Number',
+                                            font: {
+                                                size: 12,
+                                                family: 'Inter, system-ui, sans-serif'
+                                            }
+                                        },
+                                        grid: {
+                                            color: 'rgba(0, 0, 0, 0.08)',
+                                            lineWidth: 1
+                                        },
+                                        ticks: {
+                                            font: {
+                                                size: 11
+                                            }
+                                        }
+                                    }
+                                },
+                                interaction: {
+                                    intersect: false,
+                                    mode: 'index'
+                                }
+                            }}
+                        />
+                    ) : (
+                        <Scatter 
+                            data={{
+                                datasets: [{
+                                    label: "Head Position Distribution",
+                                    data: metrics.current.yawHistory.map((yaw, i) => ({x: yaw, y: metrics.current.pitchHistory[i]})),
+                                    pointBackgroundColor: '#06b6d4',
+                                    pointBorderColor: '#0891b2',
+                                    pointBorderWidth: 1,
+                                    pointRadius: 4,
+                                    pointHoverRadius: 6
+                                }]
+                            }}
+                            options={{
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: {
+                                    legend: {
+                                        position: 'top',
+                                        labels: {
+                                            font: {
+                                                size: 12,
+                                                family: 'Inter, system-ui, sans-serif'
+                                            },
+                                            padding: 20
+                                        }
+                                    },
+                                    title: {
+                                        display: true,
+                                        text: 'Head Position Distribution',
+                                        font: {
+                                            size: 16,
+                                            weight: 'bold',
+                                            family: 'Inter, system-ui, sans-serif'
+                                        },
+                                        padding: {
+                                            top: 10,
+                                            bottom: 20
+                                        }
+                                    },
+                                    annotation: {
+                                        annotations: {
+                                            ellipse: {
+                                                type: 'ellipse',
+                                                xMin: yawMean - yawSpread,
+                                                xMax: yawMean + yawSpread,
+                                                yMin: pitchMean - pitchSpread,
+                                                yMax: pitchMean + pitchSpread,
+                                                backgroundColor: "rgba(6, 182, 212, 0.1)",
+                                                borderColor: "rgba(6, 182, 212, 0.3)",
+                                                borderWidth: 2,
+                                                borderDash: [5, 5]
+                                            },
+                                            centerPoint: {
+                                                type: 'point',
+                                                xValue: yawMean,
+                                                yValue: pitchMean,
+                                                backgroundColor: '#dc2626',
+                                                borderColor: '#dc2626',
+                                                borderWidth: 2,
+                                                radius: 4
+                                            }
+                                        }
+                                    }
+                                },
+                                scales: {
+                                    y: {
+                                        beginAtZero: false,
+                                        min: -1,
+                                        max: 1,
+                                        title: {
+                                            display: true,
+                                            text: 'Pitch',
+                                            font: {
+                                                size: 12,
+                                                family: 'Inter, system-ui, sans-serif'
+                                            }
+                                        },
+                                        grid: {
+                                            color: 'rgba(0, 0, 0, 0.08)',
+                                            lineWidth: 1
+                                        },
+                                        ticks: {
+                                            stepSize: 0.4,
+                                            font: {
+                                                size: 11
+                                            }
+                                        }
+                                    },
+                                    x: {
+                                        min: -1,
+                                        max: 1,
+                                        title: {
+                                            display: true,
+                                            text: 'Yaw',
+                                            font: {
+                                                size: 12,
+                                                family: 'Inter, system-ui, sans-serif'
+                                            }
+                                        },
+                                        grid: {
+                                            color: 'rgba(0, 0, 0, 0.08)',
+                                            lineWidth: 1
+                                        },
+                                        ticks: {
+                                            font: {
+                                                size: 11
+                                            }
+                                        }
+                                    }
+                                },
+                                interaction: {
+                                    intersect: false,
+                                    mode: 'index'
+                                }
+                            }}
+                        />
+                    )}
+                </div>
+            )}
+
+            <div className="stats-summary">
+                <div className="stat-item">
+                    <span className="stat-label">Yaw Spread:</span>
+                    <span className="stat-value">{yawSpread.toFixed(3)}</span>
+                </div>
+                <div className="stat-item">
+                    <span className="stat-label">Pitch Spread:</span>
+                    <span className="stat-value">{pitchSpread.toFixed(3)}</span>
+                </div>
+            </div>
+        </div>
+    );
+}
