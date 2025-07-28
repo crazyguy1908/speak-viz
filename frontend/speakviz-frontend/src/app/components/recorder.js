@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
+import { ReactMediaRecorder } from "react-media-recorder";
 import * as faceapi from "face-api.js";
 import { supabase } from '../../supabaseClient';
 import * as FaceAnalysisMetrics from "./FaceAnalysisMetrics";
@@ -9,17 +10,8 @@ import Logout from "./logout";
 import Navbar from "./navbar";
 import { Card, CardContent } from "@/components/ui/card";
 import './recorder.css';
-import dynamic from "next/dynamic";
 
 const API_URL = "http://localhost:8000/analyze";
-
-const ReactMediaRecorder = dynamic(
-  () => import('react-media-recorder').then(mod => ({ default: mod.ReactMediaRecorder })),
-  { 
-    ssr: false,
-    loading: () => <p>Loading recorder...</p>
-  }
-);
 
 function Recorder({ user }) {
   const [idleStream, setIdleStream] = useState(null);
