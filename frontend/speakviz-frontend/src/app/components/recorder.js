@@ -307,6 +307,7 @@ const analyzeAndUploadVideo = async (blob, blobUrl, user, FaceMetrics) => {
                 <ReactMediaRecorder
                   video
                   onStop={(blobUrl, blob) => {
+                    FaceAnalysisMetrics.finalizeCurrentSegment(metrics);
                     handleDownload(blobUrl, blob);
                   }}
                   onStart={resetMetrics}

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title } from "chart.js";
 import annotationPlugin from 'chartjs-plugin-annotation';
 import zoomPlugin from 'chartjs-plugin-zoom';
-import { Doughnut, Line, Scatter } from "react-chartjs-2";
+import { Doughnut, Line, Scatter, Bar } from "react-chartjs-2";
 import './FaceMetricVisualizations.css';
 
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement, BarElement, annotationPlugin, zoomPlugin, Title);
@@ -92,7 +92,7 @@ export function calculateHeadOrientation(landmarks, box) {
         end: frameNumber,
         duration: segment.totalFrames,
         eyeContactRatio: eyeContactRatio,
-        isGoodSegment: eyeContactRatio >= 0.6
+        isGoodSegment: eyeContactRatio >= 0.8
       });
 
       m.currentSegment = {
@@ -175,6 +175,9 @@ export function calculateHeadOrientation(landmarks, box) {
       yawSpread,
       pitchSpread,
       eyeContactSegments: [...m.eyeContactSegments],
+      eyeContactFrames: m.eyeContactFrames,
+      totalFrames: m.frames,
+      eyeContactRatio: m.eyeContactRatio,
       classification,
       explanation,
       thresholds: {
@@ -185,7 +188,7 @@ export function calculateHeadOrientation(landmarks, box) {
 
     console.log("Visualization Data: ", visualizationData);
     
-    return { yawMean, yawSpread, pitchMean, pitchSpread, faceAnalysis };
+    return { yawMean, yawSpread, pitchMean, pitchSpread, faceAnalysis, eyeContactSegments: visualizationData.eyeContactSegments, eyeContactFrames: visualizationData.eyeContactFrames, totalFrames: visualizationData.totalFrames };
     
   }
 
@@ -194,10 +197,30 @@ export function calculateHeadOrientation(landmarks, box) {
     if (frames === 0) return;
     const ratio = eyeContactFrames / frames;
     const pct = (ratio * 100).toFixed(1);
-    const verdict = ratio >= 0.60 ? "Good eye contact!" : "Needs work (look at the lens more)";
+    const verdict = ratio >= 0.80 ? "Good eye contact!" : "Needs work (look at the lens more)";
 
     console.log(`Eye-contact ratio: ${eyeContactFrames}/${frames} = ${pct}% — ${verdict}`);
-     analyzeHeadOrientationSpread(metrics);
+    analyzeHeadOrientationSpread(metrics);
+  }
+
+  export function finalizeCurrentSegment(metrics) {
+    const m = metrics.current;
+    const seg = m.currentSegment;
+
+    if (seg.totalFrames === 0) return;
+
+    const eyeContactRatio = seg.eyeContactFrames / seg.totalFrames;
+
+    m.eyeContactSegments.push({
+      start: seg.start,
+      end: m.frames,
+      duration: seg.totalFrames,
+      eyeContactFrames: seg.eyeContactFrames,
+      eyeContactRatio,
+      isGoodSegment: eyeContactRatio >= 0.8
+    });
+
+    m.currentSegment = { start: m.frames, eyeContactFrames: 0, totalFrames: 0 };
   }
 
   {/* FACE METRICS GRAPHS AND VISUALIZATIONS */}
@@ -208,19 +231,69 @@ export function calculateHeadOrientation(landmarks, box) {
     const stats = React.useMemo(
         () => analyzeHeadOrientationSpread(metrics),
         [metrics.current.yawHistory.length,
-         metrics.current.pitchHistory.length]
+         metrics.current.pitchHistory.length,
+         metrics.eyeContactSegments,]
     );
 
     if (!stats) {
         return null;
     }
 
-    const { yawMean, yawSpread, pitchMean, pitchSpread } = stats;
+    const { yawMean, yawSpread, pitchMean, pitchSpread, eyeContactSegments, eyeContactFrames, totalFrames } = stats;
+
+    const segmentAnnotations = eyeContactSegments.reduce((obj, seg, i) => {
+      // pre‑compute the text so the label callback is trivial
+      const lines = [
+        `Frames:   ${seg.start} – ${seg.end}`,
+        `Duration: ${seg.duration} frames`,
+        `Eye‑contact: ${(seg.eyeContactRatio * 100).toFixed(0)} %`
+      ];
+
+      obj[`seg${i}`] = {
+        type: 'box',
+        xMin: seg.start,
+        xMax: seg.end,
+        yMin: -1,
+        yMax:  1,
+        xScaleID: 'x',
+        yScaleID: 'y',
+
+        backgroundColor: seg.isGoodSegment
+          ? 'rgba(16,185,129,.25)'  // green
+          : 'rgba(255, 99,132,.25)',// red
+        borderWidth: 1,
+
+
+        label: {
+          display: (ctx) => ctx.hovered,   
+          position: (ctx) => ctx.hoverPosition,
+          drawTime: 'afterDatasetsDraw',
+          backgroundColor: 'rgba(255,255,255,.85)',
+          font: { size: 12, weight: 'bold' },
+          padding: 2,
+          content: () => lines,
+        },
+
+        enter(ctx, event) {                             
+          ctx.hovered = true;     
+          ctx.hoverPosition = (event.x / ctx.chart.chartArea.width * 100) + '%';            
+          ctx.chart.update();                    
+        },
+        leave(ctx, event) {                               
+          ctx.hovered = false;
+          ctx.chart.update();
+        }
+      };
+
+      return obj;
+    }, {});
+
 
     return (
+      <>
         <div className="svz-recorder-figs-container">
             <div className="section-header">
-                <p className="svz-recorder-figs-title">Head Movement Analysis</p>
+                <p className="svz-recorder-figs-title">Head Movement & Eye Contact Analysis</p>
                 <div className="chart-selector">
                     <button 
                         className={`selector-btn ${selectedChart === 'line' ? 'active' : ''}`}
@@ -232,7 +305,13 @@ export function calculateHeadOrientation(landmarks, box) {
                         className={`selector-btn ${selectedChart === 'scatter' ? 'active' : ''}`}
                         onClick={() => setSelectedChart('scatter')}
                     >
-                        Distribution
+                        Yaw-Pitch Distribution
+                    </button>
+                    <button 
+                        className={`selector-btn ${selectedChart === 'doughnut' ? 'active' : ''}`}
+                        onClick={() => setSelectedChart('doughnut')}
+                    >
+                        Total Eye Contact
                     </button>
                 </div>
             </div>
@@ -251,7 +330,7 @@ export function calculateHeadOrientation(landmarks, box) {
                                         backgroundColor: 'rgba(6, 182, 212, 0.1)',
                                         borderWidth: 2,
                                         pointRadius: 2,
-                                        pointHoverRadius: 5,
+                                        pointHoverRadius: 6,
                                         tension: 0.3
                                     },
                                     {
@@ -261,7 +340,7 @@ export function calculateHeadOrientation(landmarks, box) {
                                         backgroundColor: 'rgba(245, 158, 11, 0.1)',
                                         borderWidth: 2,
                                         pointRadius: 2,
-                                        pointHoverRadius: 5,
+                                        pointHoverRadius: 6,
                                         tension: 0.3
                                     }
                                 ]
@@ -270,6 +349,9 @@ export function calculateHeadOrientation(landmarks, box) {
                                 responsive: true,
                                 maintainAspectRatio: false,
                                 plugins: {
+                                    annotation: {
+                                      annotations: segmentAnnotations,
+                                    },
                                     legend: {
                                         position: 'top',
                                         labels: {
@@ -282,7 +364,7 @@ export function calculateHeadOrientation(landmarks, box) {
                                     },
                                     title: {
                                         display: true,
-                                        text: 'Head Movement Over Time',
+                                        text: 'Head Movement Over Time (RED = Poor Eye Contact Segment, GREEN = Good Eye Contact Segment)',
                                         font: {
                                             size: 16,
                                             weight: 'bold',
@@ -339,13 +421,13 @@ export function calculateHeadOrientation(landmarks, box) {
                                     }
                                 },
                                 interaction: {
-                                    intersect: false,
-                                    mode: 'index'
+                                    intersect: true,
+                                    mode: 'nearest'
                                 }
                             }}
                         />
-                    ) : (
-                        <Scatter 
+                    ) : selectedChart === 'scatter' ? (
+                          <Scatter 
                             data={{
                                 datasets: [{
                                     label: "Head Position Distribution",
@@ -463,33 +545,78 @@ export function calculateHeadOrientation(landmarks, box) {
                                     }
                                 },
                                 interaction: {
-                                    intersect: false,
-                                    mode: 'index'
+                                    intersect: true,
+                                    mode: 'nearest'
                                 }
                             }}
                         />
+                    ) : (
+                      <Doughnut 
+                        data={{
+                          labels: ['Eye Contact', 'No Eye Contact'],
+                          datasets: [{
+                            data: [eyeContactFrames, (totalFrames - eyeContactFrames)],
+                            backgroundColor: ['#10b981', '#ef4444'],
+                            borderColor: ['#059669', '#dc2626'],
+                            borderWidth: 2
+                          }]
+                        }}
+                        options={{
+                          responsive: true,
+                          maintainAspectRatio: false,
+                          plugins: {
+                            legend: {
+                              position: 'top',
+                              labels: {
+                                font: {
+                                  size: 12,
+                                  family: 'Inter, system-ui, sans-serif'
+                                },
+                                padding: 20
+                              }
+                            },
+                            title: {
+                              display: true,
+                              text: `Total Eye Contact: ${((eyeContactFrames / totalFrames) * 100).toFixed(1)}%`,
+                              font: {
+                                size: 16,
+                                weight: 'bold',
+                                family: 'Inter, system-ui, sans-serif'
+                              },
+                              padding: {
+                                top: 10,
+                                bottom: 20
+                              }
+                            }
+                          }
+                        }}
+                      />
                     )}
-                </div>
-            )}
+                        
 
-            <div className="stats-summary">
-                <div className="stat-item">
-                    <span className="stat-label">Yaw Spread</span>
-                    <span className="stat-value">{yawSpread.toFixed(3)}</span>
                 </div>
-                <div className="stat-item">
-                    <span className="stat-label">Pitch Spread</span>
-                    <span className="stat-value">{pitchSpread.toFixed(3)}</span>
-                </div>
-                <div className="stat-item">
-                  <span className="stat-label">Yaw Mean</span>
-                  <span className="stat-value">{yawMean.toFixed(3)}</span>
-                </div>
-                <div className="stat-item">
-                  <span className="stat-label">Pitch Mean</span>
-                  <span className="stat-value">{pitchMean.toFixed(3)}</span>
-                </div>
-            </div>
-        </div>
+                
+              )}
+
+              <div className="stats-summary">
+                  <div className="stat-item">
+                      <span className="stat-label">Yaw Spread</span>
+                      <span className="stat-value">{yawSpread.toFixed(3)}</span>
+                  </div>
+                  <div className="stat-item">
+                      <span className="stat-label">Pitch Spread</span>
+                      <span className="stat-value">{pitchSpread.toFixed(3)}</span>
+                  </div>
+                  <div className="stat-item">
+                    <span className="stat-label">Yaw Mean</span>
+                    <span className="stat-value">{yawMean.toFixed(3)}</span>
+                  </div>
+                  <div className="stat-item">
+                    <span className="stat-label">Pitch Mean</span>
+                    <span className="stat-value">{pitchMean.toFixed(3)}</span>
+                  </div>
+              </div>
+          </div>
+        </>
     );
 }
