@@ -1,11 +1,7 @@
-import React, { useState, useEffect, useRef } from "react";
-import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title } from "chart.js";
-import annotationPlugin from 'chartjs-plugin-annotation';
-import zoomPlugin from 'chartjs-plugin-zoom';
-import { Doughnut, Line, Scatter, Bar } from "react-chartjs-2";
-import './FaceMetricVisualizations.css';
+"use client";
 
-ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement, BarElement, annotationPlugin, zoomPlugin, Title);
+import React, { useState, useEffect, useRef } from "react";
+import './FaceMetricVisualizations.css';
 
 
 
@@ -227,6 +223,48 @@ export function calculateHeadOrientation(landmarks, box) {
 
   export default function FaceMetricVisualizations({ metrics }) {
     const [selectedChart, setSelectedChart] = useState('line');
+    const [Chart, setChart] = useState(null);
+    const [isLoaded, setIsLoaded] = useState(false);
+  useEffect(() => {
+    const loadChart = async () => {
+      const [
+        { Chart: ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title },
+        annotationPlugin,
+        zoomPlugin,
+        { Doughnut, Line, Scatter, Bar }
+      ] = await Promise.all([
+        import('chart.js'),
+        import('chartjs-plugin-annotation'),
+        import('chartjs-plugin-zoom'),
+        import('react-chartjs-2')
+      ]);
+
+      ChartJS.register(
+        ArcElement, 
+        Tooltip, 
+        Legend, 
+        CategoryScale, 
+        LinearScale, 
+        PointElement, 
+        LineElement, 
+        BarElement, 
+        annotationPlugin.default || annotationPlugin, 
+        zoomPlugin.default || zoomPlugin, 
+        Title
+      );
+
+      setChart({ Doughnut, Line, Scatter, Bar });
+      setIsLoaded(true);
+    };
+
+    loadChart();
+  }, []);
+
+  if (!isLoaded || !Charts) {
+    return <div>Loading charts...</div>;
+  }
+
+  const { Doughnut, Line, Scatter, Bar } = Charts;
 
     const stats = React.useMemo(
         () => analyzeHeadOrientationSpread(metrics),
