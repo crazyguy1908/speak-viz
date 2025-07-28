@@ -92,7 +92,7 @@ export function calculateHeadOrientation(landmarks, box) {
         end: frameNumber,
         duration: segment.totalFrames,
         eyeContactRatio: eyeContactRatio,
-        isGoodSegment: eyeContactRatio >= 0.8
+        isGoodSegment: eyeContactRatio >= 0.6
       });
 
       m.currentSegment = {
@@ -197,7 +197,7 @@ export function calculateHeadOrientation(landmarks, box) {
     if (frames === 0) return;
     const ratio = eyeContactFrames / frames;
     const pct = (ratio * 100).toFixed(1);
-    const verdict = ratio >= 0.80 ? "Good eye contact!" : "Needs work (look at the lens more)";
+    const verdict = ratio >= 0.60 ? "Good eye contact!" : "Needs work (look at the lens more)";
 
     console.log(`Eye-contact ratio: ${eyeContactFrames}/${frames} = ${pct}% — ${verdict}`);
     analyzeHeadOrientationSpread(metrics);
@@ -213,11 +213,11 @@ export function calculateHeadOrientation(landmarks, box) {
 
     m.eyeContactSegments.push({
       start: seg.start,
-      end: m.frames,
+      end: seg.start + seg.totalFrames,
       duration: seg.totalFrames,
       eyeContactFrames: seg.eyeContactFrames,
       eyeContactRatio,
-      isGoodSegment: eyeContactRatio >= 0.8
+      isGoodSegment: eyeContactRatio >= 0.6
     });
 
     m.currentSegment = { start: m.frames, eyeContactFrames: 0, totalFrames: 0 };

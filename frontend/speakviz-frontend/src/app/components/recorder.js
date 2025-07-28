@@ -20,6 +20,7 @@ function Recorder({ user }) {
   const [recommendations, setRecommendations] = useState("");
   const [selectedContext, setSelectedContext] = useState("general");
   
+  
   const landmarkStream = useRef([]);
   const metrics = useRef({
     frames: 0,
@@ -44,6 +45,8 @@ function Recorder({ user }) {
   ];
 
 
+
+
   const resetMetrics = () => {
     metrics.current.frames = 0;
     metrics.current.eyeContactFrames = 0;
@@ -53,105 +56,110 @@ function Recorder({ user }) {
     const videoRef = useRef(null);
     const canvasRef = useRef(null);
 
+    const [human, setHuman] = useState(null);
     const [modelsLoaded, setModelsLoaded] = useState(false);
 
-    useEffect(() => {
-      const loadModels = async () => {
-        await Promise.all([
-          faceapi.nets.ssdMobilenetv1.loadFromUri('/models/ssd_mobilenetv1'),
-          faceapi.nets.faceLandmark68Net.loadFromUri(
-            "/models/face_landmark_68"
-          ),
-          faceapi.nets.faceExpressionNet.loadFromUri("/models/face_expression"),
-        ]);
-        setModelsLoaded(true);
-      };
 
-      loadModels();
+
+    useEffect(() => {
+      let cancelled = false;
+
+      (async () => {
+        // dynamically import – this runs **only in the browser**, never in SSR
+        const { default: Human } = await import('@vladmandic/human');
+
+        const h = new Human({
+          backend: 'webgl',
+          modelBasePath: '/human-models',
+          face: { enabled: true, detector: { rotation: true }, mesh: true, iris: true },
+          filter: { enabled: true },
+          async:  true,
+          warmup: 'none',
+        });
+
+        await h.load();                 // downloads weights
+        await h.tf.setBackend('webgl'); // fastest in-browser backend
+        await h.tf.ready();
+
+        if (!cancelled) {
+          setHuman(h);
+          setModelsLoaded(true);
+          console.log('🧑‍🚀 Human ready (WebGL)');
+        }
+      })();
+
+      return () => { cancelled = true; };
     }, []);
 
     useEffect(() => {
-      if (!modelsLoaded) return;
+      if (!modelsLoaded) return;                 // wait for models
+      if (!detect)        return;                // only while recording
+      if (!videoRef.current || !stream) return;
 
-      if (videoRef.current && stream) {
-        videoRef.current.srcObject = stream;
-      }
+      videoRef.current.srcObject = stream;
 
-      if (!detect) return;
+      const video  = videoRef.current;
+      const canvas = canvasRef.current;
+      const ctx    = canvas.getContext('2d');
 
-      const startVideo = () => {
-        if (videoRef.current && stream) {
-          videoRef.current.srcObject = stream;
-        }
-      };
+      /* resize canvas to video */
+      canvas.width  = video.clientWidth  || 640;
+      canvas.height = video.clientHeight || 480;
 
-      const detectFace = async () => {
-        const video = videoRef.current;
-        const canvas = canvasRef.current;
+      let running = true;
 
-        if (!video || !canvas) return;
+      const loop = async () => {
+        if (!running) return;
 
-        const w = video.clientWidth;
-        const h = video.clientHeight;
-        if (!w || !h) return;
-        const displaySize = { width: w, height: h };
+        const result = await human.detect(video);
 
-        canvas.width = w;
-        canvas.height = h;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        human.draw.all(canvas, result);          // overlay mesh / iris
 
-        faceapi.matchDimensions(canvas, displaySize);
+        if (result.face.length) {
+          const f   = result.face[0];            // most confident face
+          const box = f.box;                     // [x, y, w, h]
+          const [pitch, yaw] = f.rotation;       // radians
+          const leftIris  = f.iris.left;         // [x, y]
+          const rightIris = f.iris.right;
 
-        setInterval(async () => {
-          const detections = await faceapi
-            .detectAllFaces(video, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.35, inputSize: 512 }))
-            .withFaceLandmarks()
-            .withFaceExpressions();
+          // simple 2-D gaze using iris centroids  ──────────────
+          const pupil = {
+            x: (leftIris[0] + rightIris[0]) * 0.5,
+            y: (leftIris[1] + rightIris[1]) * 0.5
+          };
+          const nx = (pupil.x - box[0]) / box[2];   // 0–1
+          const ny = (pupil.y - box[1]) / box[3];
 
-          // console.log(detections);
+          let gaze = 'STRAIGHT';
+          if (ny < 0.30)      gaze = 'UP';
+          else if (nx < 0.38) gaze = 'RIGHT';
+          else if (nx > 0.62) gaze = 'LEFT';
 
-          const resizedDetections = faceapi.resizeResults(
-            detections,
-            displaySize
+          const inEyeContact = gaze === 'STRAIGHT' && Math.abs(yaw) < 0.30;
+
+          // push to the same metric buffers you already use ────
+          metrics.current.frames += 1;
+          if (inEyeContact) metrics.current.eyeContactFrames += 1;
+
+          FaceAnalysisMetrics.updateOrientationMetrics(
+            yaw, pitch, inEyeContact,
+            metrics, metrics.current.frames
           );
+        }
 
-          if (detections.length) {
-            const d = detections[0];
-            const landmarks = d.landmarks;
-            const box = d.detection.box;
-            const boxCX = box.x + box.width * 0.5;
-
-            const gaze = FaceAnalysisMetrics.gazeDirection(landmarks, box);
-            const nose = landmarks.getNose()[0];
-
-            const headYaw = (nose.x - boxCX) / (box.width * 0.5);
-            const inEyeContact = gaze === "STRAIGHT" && Math.abs(headYaw) < 0.30;
-
-            const { yaw, pitch } = FaceAnalysisMetrics.calculateHeadOrientation(landmarks, box);
-
-            metrics.current.frames++;
-            if (inEyeContact) metrics.current.eyeContactFrames++;
-
-            FaceAnalysisMetrics.updateOrientationMetrics(yaw, pitch, inEyeContact, metrics, metrics.current.frames);
-
-          }
-
-          canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
-          faceapi.draw.drawDetections(canvas, resizedDetections);
-          faceapi.draw.drawFaceLandmarks(canvas, resizedDetections);
-          faceapi.draw.drawFaceExpressions(canvas, resizedDetections);
-        }, 100);
+        setTimeout(loop, 100);                 // 10 fps polling
       };
 
-      startVideo();
-      const vid = videoRef.current;
-      if (!vid) return;
-      vid.addEventListener("loadedmetadata", detectFace, { once: true });
+      /* start once video metadata ready */
+      video.addEventListener('loadedmetadata', loop, { once: true });
 
-      return () => vid.removeEventListener("loadedmetadata", detectFace);
+      /* cleanup */
+      return () => { running = false; };
     }, [modelsLoaded, stream, detect]);
-    if (!stream) {
-      return null;
-    }
+
+    /* ---------- render ---------- */
+    if (!stream) return null;
     return (
       <div className="svz-video-preview-wrapper">
         <video className={className} ref={videoRef} autoPlay muted />
