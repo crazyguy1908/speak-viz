@@ -6,9 +6,12 @@ import opensmile
 import parselmouth
 from google.api_core.exceptions import PermissionDenied
 import google.generativeai as genai
-
+import pyloudnorm as pyln
+from transformers import AutoFeatureExtractor, AutoModelForAudioClassification
+import torch
+import torchaudio
 class VoiceAnalyzer:
-    def __init__(self, sample_rate=44100, channels=1):
+    def __init__(self, sample_rate=16000, channels=1):
         self.sample_rate = sample_rate
         self.channels = channels
         print("Loading Whisper model...")
@@ -26,6 +29,11 @@ class VoiceAnalyzer:
             feature_level=opensmile.FeatureLevel.LowLevelDescriptors
         )
         print("OpenSMILE extractor ready.")
+        model_name = "superb/hubert-large-superb-er"
+        print(f"Loading emotion model '{model_name}'…")
+        self.fe = AutoFeatureExtractor.from_pretrained(model_name)
+        self.model = AutoModelForAudioClassification.from_pretrained(model_name)
+        print("Emotion model ready.")
 
     def transcribe_audio(self, audio_file):
         if not self.whisper_model:
@@ -91,13 +99,33 @@ class VoiceAnalyzer:
 
         # Optional Parselmouth pitch
         pitch_stats = self._analyze_pitch(parselmouth.Sound(y, sr)) if y is not None else {}
+        def volume_calcuation(y, sr):
+            data, rate = sf.read(audio_file)
+            meter = pyln.Meter(rate)
+            audio_mono = y if y.ndim == 1 else y.mean(axis=1)
+            loudness = abs(meter.integrated_loudness(data))
+            print(f"Loudness: {loudness:.2f} LUFS")
+            return loudness
+        def detect_emotion():
+            wav, sr = sf.read(audio_file)
+            inputs = self.fe(wav, sampling_rate=sr, return_tensors="pt", padding=True)
+            with torch.no_grad():
+                logits = self.model(**inputs).logits
+            probs = torch.softmax(logits, dim=-1)[0].cpu().numpy()
+            labels = self.model.config.id2label
+            emotion_scores = {labels[i]: float(probs[i]) for i in range(len(probs))}
+            top_label = max(emotion_scores, key=emotion_scores.get)
+            print(f"Detected emotion: {top_label}")
+            for emo, p in emotion_scores.items():
+                print(f"  {emo}: {p:.3f}")
+            return {"label": top_label, "scores": emotion_scores}
 
         analysis = {
             'transcription': transcript,
             'speed_wpm': speed_wpm,
             'pause_durations_s': pauses,
-            'tone_score': float(tone_score),
-            'loudness': float(energy.mean()),
+            'tone_score': detect_emotion(),
+            'loudness': volume_calcuation(y, sr),
             'pitch_stats': pitch_stats
         }
         return analysis
