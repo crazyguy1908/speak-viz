@@ -185,6 +185,8 @@ class VoiceAnalyzer:
                             f"for improving public speaking. {context_addition}\n\n"
                             f"Metrics:\n{analysis_json}\n\nRecommendations:"
                             f"{faceAnalysis}\n\n"
+                            f" analyze Grammar + clarity Keyword coverage Bad Vocabulary (Transition words, just, so, etc) Repetition / Conciseness (how much more is being said than it should)"
+                            f"GIVE 3 STRENGTHS AND 3 Weaknesses"
             )
 
             # rest of your existing code stays the same
