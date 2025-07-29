@@ -79,21 +79,51 @@ class VoiceAnalyzer:
         word_count = len(transcript.split())
         speed_wpm = (word_count / total_duration) * 60 if total_duration > 0 else 0
 
-        # 3) Pause detection
-        energy = lld_df['Loudness_sma3'].to_numpy()
-        silent = energy < -50
-        pauses = []
-        sr_lld = 100  # approx LLD frame rate
-        i=0
-        while i < len(silent):
-            if silent[i]:
-                start=i
-                while i < len(silent) and silent[i]: i+=1
-                length = (i-start)/sr_lld
-                if length>0.2: pauses.append(length)
-            else:
-                i+=1
+        # 3) Pause detection - new implementation
+        def detect_pauses(audio_data, sr_lld=100, min_pause_dur=0.25):
+            # Convert to numpy array if needed
+            energy = np.array(lld_df['Loudness_sma3'])
+            
+            # Calculate rolling statistics
+            window = 5
+            rolling_mean = np.convolve(energy, np.ones(window)/window, mode='valid')
+            rolling_std = np.array([np.std(energy[max(0, i-window):min(len(energy), i+window)]) 
+                                  for i in range(len(energy))])
+            
+            # Multiple threshold approach
+            abs_threshold = -35  # absolute energy threshold
+            rel_threshold = np.mean(rolling_mean) - 1.5 * np.mean(rolling_std)
+            
+            # Combine thresholds
+            is_pause = (energy < abs_threshold) | (energy < rel_threshold)
+            
+            # Add hysteresis to prevent rapid switching
+            hysteresis = 3  # frames
+            for i in range(len(is_pause)-hysteresis):
+                if all(is_pause[i:i+hysteresis]):
+                    is_pause[i:i+hysteresis] = True
+            
+            # Find pause segments
+            pause_starts = np.where(np.diff(is_pause.astype(int)) == 1)[0]
+            pause_ends = np.where(np.diff(is_pause.astype(int)) == -1)[0]
+            
+            # Adjust arrays if needed
+            if len(pause_starts) == 0 or len(pause_ends) == 0:
+                return []
+            if pause_ends[0] < pause_starts[0]:
+                pause_ends = pause_ends[1:]
+            if len(pause_starts) > len(pause_ends):
+                pause_starts = pause_starts[:-1]
+                
+            # Calculate pause durations
+            pause_durations = [(end - start) / sr_lld for start, end in zip(pause_starts, pause_ends)
+                             if (end - start) / sr_lld >= min_pause_dur]
+            
+            return pause_durations
 
+        pauses = detect_pauses(y)
+        print(f"Detected {len(pauses)} pauses with durations: {[f'{p:.2f}s' for p in pauses]}")
+        
         # 4) Tone via spectral slope
         tone_score = lld_df['slope0-500_sma3'].mean()
 
@@ -114,6 +144,12 @@ class VoiceAnalyzer:
             probs = torch.softmax(logits, dim=-1)[0].cpu().numpy()
             labels = self.model.config.id2label
             emotion_scores = {labels[i]: float(probs[i]) for i in range(len(probs))}
+            
+            # Check if any emotion has confidence > 0.5
+            if all(score < 0.5 for score in emotion_scores.values()):
+                print("No strong emotions detected, defaulting to neutral")
+                return {"label": "neutral", "scores": emotion_scores}
+            
             top_label = max(emotion_scores, key=emotion_scores.get)
             print(f"Detected emotion: {top_label}")
             for emo, p in emotion_scores.items():
@@ -188,6 +224,7 @@ class VoiceAnalyzer:
                             f" analyze Grammar + clarity Keyword coverage Bad Vocabulary (Transition words, just, so, etc) Repetition / Conciseness (how much more is being said than it should)"
                             f"GIVE 3 STRENGTHS AND 3 Weaknesses. DO NOT say things like based on the json metric just give the metric and just give the 6 points."
                             f"Refer to the speaker as you and write a minimum of 50 words for each point. The strenghts and weaknesses should not be similar. additionally do not mention any missing metrics or exact value. say thing like high wpm or low wpm"
+                            f"be very specific with your feedback giving tanglible improvments and refer to the transcript if required for specific phrases etc"
             )
 
             # rest of your existing code stays the same
