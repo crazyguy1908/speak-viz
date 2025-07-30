@@ -1,29 +1,41 @@
+// next.config.mjs
 /** @type {import('next').NextConfig} */
-const nextConfig = {
-  transpilePackages: ['@vladmandic/human'],
-  
-  webpack: (config, { isServer }) => {
-    if (!isServer) {
-      config.resolve.fallback = {
-        ...(config.resolve.fallback || {}),
-        fs: false,
-        path: false,
-        os: false,
-        crypto: false,
-        util: false,
-        stream: false,
-        buffer: false,
-      };
+export default {
+  webpack(config, { isServer }) {
+    //
+    // ── 1. Server: stop at the import boundary ─────────────────────────────
+    //
+    if (isServer) {
+      //   a) Make the library external so SSR webpack never resolves it
+      //      (dynamic import in the browser still works → it’s executed only
+      //       after hydration, on the client).
+      config.externals = [
+        ...(config.externals || []),
+        '@vladmandic/human',
+      ];
 
-      config.externals = config.externals || [];
-      config.externals.push({
-        '@tensorflow/tfjs-node': 'commonjs @tensorflow/tfjs-node',
-        '@tensorflow/tfjs-node-gpu': 'commonjs @tensorflow/tfjs-node-gpu',
-      });
+      //   b) And just in case something reaches into sub-paths, alias them
+      //      to `false` so resolution immediately ends.
+      config.resolve.alias = {
+        ...(config.resolve.alias || {}),
+        '@vladmandic/human/dist/human.node.js': false,
+        '@vladmandic/human/dist/human.esm.js' : false,
+        '@tensorflow/tfjs-node'               : false,
+        '@tensorflow/tfjs-node-gpu'           : false,
+      };
+      return config;
     }
+
+    //
+    // ── 2. Client: always use the pure-browser ESM build ──────────────────
+    //
+    config.resolve.alias = {
+      ...(config.resolve.alias || {}),
+      '@vladmandic/human/dist/human.node.js': false,
+      '@tensorflow/tfjs-node'               : false,
+      '@tensorflow/tfjs-node-gpu'           : false,
+    };
 
     return config;
   },
 };
-
-export default nextConfig;

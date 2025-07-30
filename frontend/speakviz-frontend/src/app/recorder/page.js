@@ -5,6 +5,8 @@ import { supabase } from '../../supabaseClient';
 import Recorder from '../components/recorder';
 import Navbar from '../components/navbar';
 
+
+
 export default function RecorderPage() {
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
