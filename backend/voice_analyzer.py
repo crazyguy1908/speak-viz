@@ -38,133 +38,159 @@ class VoiceAnalyzer:
     def transcribe_audio(self, audio_file):
         if not self.whisper_model:
             print("Whisper model not loaded. Skipping transcription.")
-            return ""
+            return "", []
         if not os.path.exists(audio_file):
             print(f"Audio file not found for transcription: {audio_file}")
-            return ""
+            return "", []
         print("Transcribing audio...")
         try:
             result = self.whisper_model.transcribe(audio_file, word_timestamps=True)
             print("Transcription complete.")
             transcript = result.get("text", "")
-            segments = result.get("segments", [])
-            return transcript, segments
+            words = []
+            for segment in result["segments"]:
+                if "words" in segment:
+                    words.extend(segment["words"])
+            return transcript, words
         except Exception as e:
             print(f"Error during transcription: {e}")
             return "", []
+
+    def detect_emphasized_words(self, audio_file, energy, words, transcript, sr_lld=100):
+        data, rate = sf.read(audio_file)
+        meter = pyln.Meter(rate)
+        emphasized_words = []
+        for word in words:
+            start_sample = int(word['start'] * rate)
+            end_sample = int(word['end'] * rate)
+            if start_sample < len(data) and end_sample < len(data):
+                word_segment = data[start_sample:end_sample]
+                if len(word_segment) > 0:
+                    try:
+                        word_loudness = meter.integrated_loudness(word_segment)
+                        if not np.isnan(word_loudness):
+                            emphasized_words.append((word['word'], word_loudness))
+                    except Exception as e:
+                        print(f"Error calculating loudness for word {word['word']}: {e}")
+                        continue
+        if emphasized_words:
+            loudness_values = [l for _, l in emphasized_words]
+            mean_loudness = np.mean(loudness_values)
+            std_loudness = np.std(loudness_values)
+            threshold = mean_loudness + 0.75 * std_loudness
+            result = [word for word, loudness in emphasized_words if loudness > threshold]
+            print(f"Found {len(result)} emphasized words out of {len(emphasized_words)} total words")
+            return result
+        return []
 
     def analyze_audio(self, audio_file):
         print(f"Analyzing audio file: {audio_file}")
         if not os.path.exists(audio_file):
             raise FileNotFoundError(f"Audio file not found: {audio_file}")
-
-        # Read raw audio for fallback and to pass to Parselmouth if needed
+        transcript, words = self.transcribe_audio(audio_file)
+        if not words:
+            print("No words detected in audio")
+            return None
+        start_time = words[0]['start']
+        end_time = words[-1]['end']
+        print(f"Trimming audio from {start_time:.2f}s to {end_time:.2f}s")
         try:
             y, sr = sf.read(audio_file)
             if len(y.shape) > 1:
                 y = np.mean(y, axis=1)
-        except Exception as e:
-            print(f"Error reading audio file: {e}")
-            y, sr = None, None
+            start_sample = int(start_time * sr)
+            end_sample = min(int(end_time * sr), len(y))
+            y = y[start_sample:end_sample]
+            temp_file = audio_file + '.trimmed.wav'
+            sf.write(temp_file, y, sr)
+            offset = start_time
+            for word in words:
+                word['start'] -= offset
+                word['end'] -= offset
+            print("Processing with OpenSMILE...")
+            lld_df = self.smile.process_file(temp_file)
+            print(f"Extracted {len(lld_df.columns)} LLD features.")
 
-        # 1) Extract Low-Level Descriptors via OpenSMILE
-        print("Processing with OpenSMILE...")
-        lld_df = self.smile.process_file(audio_file)
-        print(f"Extracted {len(lld_df.columns)} LLD features.")
+            transcript, words = self.transcribe_audio(temp_file)
+            total_duration = words[-1]['end'] if words else (len(y)/sr if y is not None else 0)
+            word_count = len(words)
+            speed_wpm = (word_count / total_duration) * 60 if total_duration > 0 else 0
 
-        # 2) Transcription + speed
-        transcript, segments = self.transcribe_audio(audio_file)
-        durations = [seg['end'] - seg['start'] for seg in segments]
-        total_duration = segments[-1]['end'] if segments else (len(y)/sr if y is not None else 0)
-        word_count = len(transcript.split())
-        speed_wpm = (word_count / total_duration) * 60 if total_duration > 0 else 0
-
-        # 3) Pause detection - new implementation
-        def detect_pauses(audio_data, sr_lld=100, min_pause_dur=0.25):
-            # Convert to numpy array if needed
-            energy = np.array(lld_df['Loudness_sma3'])
-            
-            # Calculate rolling statistics
-            window = 5
-            rolling_mean = np.convolve(energy, np.ones(window)/window, mode='valid')
-            rolling_std = np.array([np.std(energy[max(0, i-window):min(len(energy), i+window)]) 
-                                  for i in range(len(energy))])
-            
-            # Multiple threshold approach
-            abs_threshold = -35  # absolute energy threshold
-            rel_threshold = np.mean(rolling_mean) - 1.5 * np.mean(rolling_std)
-            
-            # Combine thresholds
-            is_pause = (energy < abs_threshold) | (energy < rel_threshold)
-            
-            # Add hysteresis to prevent rapid switching
-            hysteresis = 3  # frames
-            for i in range(len(is_pause)-hysteresis):
-                if all(is_pause[i:i+hysteresis]):
-                    is_pause[i:i+hysteresis] = True
-            
-            # Find pause segments
-            pause_starts = np.where(np.diff(is_pause.astype(int)) == 1)[0]
-            pause_ends = np.where(np.diff(is_pause.astype(int)) == -1)[0]
-            
-            # Adjust arrays if needed
-            if len(pause_starts) == 0 or len(pause_ends) == 0:
-                return []
-            if pause_ends[0] < pause_starts[0]:
-                pause_ends = pause_ends[1:]
-            if len(pause_starts) > len(pause_ends):
-                pause_starts = pause_starts[:-1]
+            def detect_pauses(audio_data, sr_lld=100, min_pause_dur=0.25):
+                energy = np.array(lld_df['Loudness_sma3'])
+                window = 5
+                rolling_mean = np.convolve(energy, np.ones(window)/window, mode='valid')
+                rolling_std = np.array([np.std(energy[max(0, i-window):min(len(energy), i+window)]) 
+                                      for i in range(len(energy))])
+                abs_threshold = -35  
+                rel_threshold = np.mean(rolling_mean) - 1.5 * np.mean(rolling_std)
+                is_pause = (energy < abs_threshold) | (energy < rel_threshold)
+                hysteresis = 3  # frames
+                for i in range(len(is_pause)-hysteresis):
+                    if all(is_pause[i:i+hysteresis]):
+                        is_pause[i:i+hysteresis] = True
+                pause_starts = np.where(np.diff(is_pause.astype(int)) == 1)[0]
+                pause_ends = np.where(np.diff(is_pause.astype(int)) == -1)[0]
+                if len(pause_starts) == 0 or len(pause_ends) == 0:
+                    return []
+                if pause_ends[0] < pause_starts[0]:
+                    pause_ends = pause_ends[1:]
+                if len(pause_starts) > len(pause_ends):
+                    pause_starts = pause_starts[:-1]
+                # Calculate pause durations
+                pause_durations = [(end - start) / sr_lld for start, end in zip(pause_starts, pause_ends)
+                                 if (end - start) / sr_lld >= min_pause_dur]
                 
-            # Calculate pause durations
-            pause_durations = [(end - start) / sr_lld for start, end in zip(pause_starts, pause_ends)
-                             if (end - start) / sr_lld >= min_pause_dur]
-            
-            return pause_durations
+                return pause_durations
 
-        pauses = detect_pauses(y)
-        print(f"Detected {len(pauses)} pauses with durations: {[f'{p:.2f}s' for p in pauses]}")
-        
-        # 4) Tone via spectral slope
-        tone_score = lld_df['slope0-500_sma3'].mean()
-
-        # Optional Parselmouth pitch
-        pitch_stats = self._analyze_pitch(parselmouth.Sound(y, sr)) if y is not None else {}
-        def volume_calcuation(y, sr):
-            data, rate = sf.read(audio_file)
-            meter = pyln.Meter(rate)
-            audio_mono = y if y.ndim == 1 else y.mean(axis=1)
-            loudness = abs(meter.integrated_loudness(data))
-            print(f"Loudness: {loudness:.2f} LUFS")
-            return loudness
-        def detect_emotion():
-            wav, sr = sf.read(audio_file)
-            inputs = self.fe(wav, sampling_rate=sr, return_tensors="pt", padding=True)
-            with torch.no_grad():
-                logits = self.model(**inputs).logits
-            probs = torch.softmax(logits, dim=-1)[0].cpu().numpy()
-            labels = self.model.config.id2label
-            emotion_scores = {labels[i]: float(probs[i]) for i in range(len(probs))}
+            pauses = detect_pauses(y)
+            print(f"Detected {len(pauses)} pauses with durations: {[f'{p:.2f}s' for p in pauses]}")
+            pitch_stats = self._analyze_pitch(parselmouth.Sound(y, sr)) if y is not None else {}
             
-            # Check if any emotion has confidence > 0.5
-            if all(score < 0.5 for score in emotion_scores.values()):
-                print("No strong emotions detected, defaulting to neutral")
-                return {"label": "neutral", "scores": emotion_scores}
+            def volume_calcuation(y, sr):
+                data, rate = sf.read(audio_file)
+                meter = pyln.Meter(rate)
+                audio_mono = y if y.ndim == 1 else y.mean(axis=1)
+                loudness = abs(meter.integrated_loudness(data))
+                print(f"Loudness: {loudness:.2f} LUFS")
+                return loudness
             
-            top_label = max(emotion_scores, key=emotion_scores.get)
-            print(f"Detected emotion: {top_label}")
-            for emo, p in emotion_scores.items():
-                print(f"  {emo}: {p:.3f}")
-            return {"label": top_label, "scores": emotion_scores}
-
-        analysis = {
-            'transcription': transcript,
-            'speed_wpm': speed_wpm,
-            'pause_durations_s': pauses,
-            'tone_score': detect_emotion(),
-            'loudness': volume_calcuation(y, sr),
-            'pitch_stats': pitch_stats
-        }
-        return analysis
+            def detect_emotion():
+                wav, sr = sf.read(audio_file)
+                inputs = self.fe(wav, sampling_rate=sr, return_tensors="pt", padding=True)
+                with torch.no_grad():
+                    logits = self.model(**inputs).logits
+                probs = torch.softmax(logits, dim=-1)[0].cpu().numpy()
+                labels = self.model.config.id2label
+                emotion_scores = {labels[i]: float(probs[i]) for i in range(len(probs))}
+                
+                # Check if any emotion has confidence > 0.5
+                if all(score < 0.5 for score in emotion_scores.values()):
+                    print("No strong emotions detected, defaulting to neutral")
+                    return {"label": "neutral", "scores": emotion_scores}
+                
+                top_label = max(emotion_scores, key=emotion_scores.get)
+                print(f"Detected emotion: {top_label}")
+                for emo, p in emotion_scores.items():
+                    print(f"  {emo}: {p:.3f}")
+                return {"label": top_label, "scores": emotion_scores}
+            emphasized_words = self.detect_emphasized_words(audio_file, None, words, transcript) 
+            analysis = {
+                'transcription': transcript,
+                'speed_wpm': speed_wpm,
+                'pause_durations_s': pauses,
+                'tone_score': detect_emotion(),
+                'loudness': volume_calcuation(y, sr),
+                'pitch_stats': pitch_stats,
+                'emphasized_words': emphasized_words
+            }
+            return analysis
+        except Exception as e:
+            print(f"Error processing audio: {e}")
+            return None
+        finally:
+            if os.path.exists(temp_file):
+                os.remove(temp_file)
 
     def _analyze_pitch(self, sound):
         try:
@@ -192,8 +218,6 @@ class VoiceAnalyzer:
 
 
     def get_gemini_recommendations(self, analysis, context="general", faceAnalysis=""):
-
-        # Context-specific prompt modifications
         context_prompts = {
             "presentation": "Focus on executive presence, clear messaging, and audience engagement for business presentations.",
             "interview": "Emphasize confidence, clarity, and professional communication suitable for job interviews.",
@@ -225,6 +249,8 @@ class VoiceAnalyzer:
                             f"GIVE 3 STRENGTHS AND 3 Weaknesses. DO NOT say things like based on the json metric just give the metric and just give the 6 points."
                             f"Refer to the speaker as you and write a minimum of 50 words for each point. The strenghts and weaknesses should not be similar. additionally do not mention any missing metrics or exact value. say thing like high wpm or low wpm"
                             f"be very specific with your feedback giving tanglible improvments and refer to the transcript if required for specific phrases etc"
+                            f"in addition refer to the emphasised words in the context of the audio an offer feedback regarding the same ONLY IF APPLICABLES"
+                            f"only talk about emphasis if it is relavent. DO NOT TALK ABOUT IT EVERY TIME"
             )
 
             # rest of your existing code stays the same
