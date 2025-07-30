@@ -1,4 +1,3 @@
-
 "use client"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -35,19 +34,20 @@ export default function SpeakVizLanding() {
       {/* Hero Section */}
       <section className="svz-home-hero">
         <Badge className="svz-home-hero-badge">
-          🎯 Trusted by 10,000+ Speech Therapists
+          🎯 Advanced Speech Analytics for Everyone
         </Badge>
 
         <h1 className="svz-home-hero-title">
-          Transform Speech Therapy with{" "}
+          Master Communication with{" "}
           <span className="svz-home-hero-title-highlight">
-            Visual Intelligence
+            AI-Powered Insights
           </span>
         </h1>
 
         <p className="svz-home-hero-desc">
-          Empower your clients with cutting-edge visualization tools that make speech therapy more engaging, effective,
-          and measurable. See progress like never before.
+          Real-time speech analysis, facial expression tracking, and personalized AI feedback 
+          to help you communicate with confidence. Perfect for speech therapy, communication coaching, 
+          and social skills development.
         </p>
 
         <div className="svz-home-hero-cta">
@@ -97,10 +97,10 @@ export default function SpeakVizLanding() {
               <div className="svz-home-feature-icon svz-home-feature-icon-blue">
                 <Target className="svz-home-feature-icon-svg" />
               </div>
-              <h3 className="svz-home-feature-title">Real-Time Feedback</h3>
+              <h3 className="svz-home-feature-title">Speech Analytics</h3>
               <p className="svz-home-feature-desc">
-                Instant visual feedback helps clients understand their speech patterns and make corrections in
-                real-time, accelerating progress.
+                Visualize your speech patterns with real-time line graphs tracking pitch, volume, and tempo. 
+                Get instant insights into your verbal communication style.
               </p>
             </CardContent>
           </Card>
@@ -110,10 +110,10 @@ export default function SpeakVizLanding() {
               <div className="svz-home-feature-icon svz-home-feature-icon-purple">
                 <BarChart3 className="svz-home-feature-icon-svg" />
               </div>
-              <h3 className="svz-home-feature-title">Progress Tracking</h3>
+              <h3 className="svz-home-feature-title">Expression Analysis</h3>
               <p className="svz-home-feature-desc">
-                Comprehensive analytics and reporting tools that make it easy to track client progress and share results
-                with families.
+                Track facial expressions and gestures in real-time. Get feedback on emotional conveyance 
+                and body language to enhance your non-verbal communication.
               </p>
             </CardContent>
           </Card>
@@ -123,10 +123,10 @@ export default function SpeakVizLanding() {
               <div className="svz-home-feature-icon svz-home-feature-icon-green">
                 <Users className="svz-home-feature-icon-svg" />
               </div>
-              <h3 className="svz-home-feature-title">Client Engagement</h3>
+              <h3 className="svz-home-feature-title">AI Coaching</h3>
               <p className="svz-home-feature-desc">
-                Gamified exercises and interactive visualizations keep clients motivated and engaged throughout their
-                therapy journey.
+                Receive personalized feedback and practice cues from our AI system. Practice with 
+                role-play scenarios and track your progress over time.
               </p>
             </CardContent>
           </Card>
@@ -146,19 +146,19 @@ export default function SpeakVizLanding() {
             <div className="svz-home-benefits-list">
               <div className="svz-home-benefit-item">
                 <CheckCircle className="svz-home-benefit-icon" />
-                <span className="svz-home-benefit-text">40% faster client progress on average</span>
+                <span className="svz-home-benefit-text">Real-time speech visualization and analytics</span>
               </div>
               <div className="svz-home-benefit-item">
                 <CheckCircle className="svz-home-benefit-icon" />
-                <span className="svz-home-benefit-text">95% client satisfaction rate</span>
+                <span className="svz-home-benefit-text">Facial expression and gesture tracking</span>
               </div>
               <div className="svz-home-benefit-item">
                 <CheckCircle className="svz-home-benefit-icon" />
-                <span className="svz-home-benefit-text">Save 3+ hours per week on documentation</span>
+                <span className="svz-home-benefit-text">AI-powered feedback and practice scenarios</span>
               </div>
               <div className="svz-home-benefit-item">
                 <CheckCircle className="svz-home-benefit-icon" />
-                <span className="svz-home-benefit-text">HIPAA compliant and secure</span>
+                <span className="svz-home-benefit-text">Comprehensive progress tracking and reporting</span>
               </div>
             </div>
 
@@ -263,26 +263,12 @@ export default function SpeakVizLanding() {
       <section className="svz-home-cta">
         <div className="svz-home-cta-inner">
           <div className="svz-home-cta-content">
-            <h2 className="svz-home-cta-title">Ready to Transform Your Speech Therapy Practice?</h2>
+            <h2 className="svz-home-cta-title">Ready to Transform Your Speaking?</h2>
             <p className="svz-home-cta-desc">
-              Join thousands of speech therapists who are already seeing better outcomes with SpeakViz. Start your free
-              trial today - no credit card required.
+              Join thousands of users who are already seeing better outcomes with SpeakViz.
             </p>
 
-            <div className="svz-home-cta-btns">
-              <Button
-                size="lg"
-                className="svz-home-cta-btn"
-                onClick={() => router.push('/signin')}
-              >
-                Start Free 14-Day Trial
-              </Button>
-              <Button size="lg" variant="outline" className="svz-home-cta-btn-outline" onClick={() => router.push('/signin')}>
-                Schedule a Demo
-              </Button>
-            </div>
-
-            <p className="svz-home-cta-footnote">✓ No setup fees ✓ Cancel anytime ✓ Full support included</p>
+            <p className="svz-home-cta-footnote">✓ No hidden fees ✓ Cancel anytime ✓ Full support included</p>
           </div>
         </div>
       </section>
