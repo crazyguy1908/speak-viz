@@ -14,10 +14,13 @@ const API_URL = "http://localhost:8000/analyze";
 
 function Recorder({ user }) {
   const [idleStream, setIdleStream] = useState(null);
+  const [modelsLoaded, setModelsLoaded] = useState(false);
   const [analysis, setAnalysis] = useState("");
   const [feedback, setFeedback] = useState("");
   const [recommendations, setRecommendations] = useState("");
   const [selectedContext, setSelectedContext] = useState("general");
+  const [showOverlay, setShowOverlay] = useState(false);
+  
 
   const metrics = useRef({
     frames: 0,
@@ -26,6 +29,7 @@ function Recorder({ user }) {
     movePx: 0, lastBox: null,
     yawHistory: [],
     pitchHistory: [],
+    gazeHistory: [],
     eyeContactSegments: [],
     currentSegment: { start: 0, eyeContactFrames: 0, totalFrames: 0 }
   });
@@ -47,11 +51,10 @@ function Recorder({ user }) {
     metrics.current.eyeContactFrames = 0;
   }
 
-  const VideoPreview = ({ stream, className, detect }) => {
+  const VideoPreview = ({ stream, className, detect, showOverlay }) => {
     const videoRef = useRef(null);
     const canvasRef = useRef(null);
     const [human, setHuman] = useState(null);
-    const [modelsLoaded, setModelsLoaded] = useState(false);
     const [error, setError] = useState(null);
     const detectionLoopRef = useRef(false);
     const drawLoopRef = useRef(false);
@@ -67,7 +70,7 @@ function Recorder({ user }) {
         mesh: { enabled: true }, 
         attention: { enabled: false }, 
         iris: { enabled: true }, 
-        description: { enabled: true }, 
+        description: { enabled: false }, 
         emotion: { enabled: false }, 
         antispoof: { enabled: false }, 
         liveness: { enabled: false } 
@@ -151,7 +154,6 @@ function Recorder({ user }) {
       };
     }, [stream]);
 
-    // Detection loop - similar to original demo
     useEffect(() => {
       if (!modelsLoaded || !human || !detect) {
         detectionLoopRef.current = false;
@@ -168,9 +170,53 @@ function Recorder({ user }) {
         if (!video.paused && video.readyState >= 2) {
           try {
             await human.detect(video);
+
+            if (human.result && human.result.face && human.result.face.length > 0) {
+              const gestures = human.result?.gesture ?? [];
+              const faces = human.result?.face ?? [];
+              const rot = faces[0].rotation;
+
+              const gaze = FaceAnalysisMetrics.gazeDirection(gestures);
+
+              const inEyeContact = 
+                gaze.some(o => o.gesture === 'looking center') &&
+                gaze.some(o => o.gesture === 'facing center');
+              
+              const { yaw, pitch, gazeBearing } = FaceAnalysisMetrics.calculateHeadOrientation(rot);
+
+              metrics.current.frames++;
+              if (inEyeContact) metrics.current.eyeContactFrames++;
+
+              FaceAnalysisMetrics.updateOrientationMetrics(yaw, pitch, gazeBearing, inEyeContact, metrics, metrics.current.frames);
+            }
+
+
+
+            /* if (faces.length) {
+              const rot = faces[0].rotation;
+              const angle = rot.angle;
+              const gaze = rot.gaze;
+
+              console.log(
+                'pitch', angle.pitch,
+                'yaw', angle.yaw,
+                'roll', angle.roll,
+                'gaze', gaze.bearing
+              );
+            } */             
+            
+            /* const irisEntries = gestures.filter(o => Object.hasOwn(o, 'iris')); 
+            const eyeContact = [];
+            const haveBothCenters =  
+              irisEntries.some(o => o.gesture === 'looking center') &&
+              irisEntries.some(o => o.gesture === 'facing center');
+            if (haveBothCenters) {
+              console.log("eye contact")
+            } */
+            
             
             // Process face data for metrics
-            if (human.result && human.result.face && human.result.face.length > 0) {
+            /* if (human.result && human.result.face && human.result.face.length > 0) {
               const f = human.result.face[0];
               const box = f.box;
               const [pitch, yaw] = f.rotation || [0, 0];
@@ -202,7 +248,7 @@ function Recorder({ user }) {
                   metrics, metrics.current.frames
                 );
               }
-            }
+            } */
           } catch (error) {
             console.error('Detection error:', error);
           }
@@ -241,9 +287,8 @@ function Recorder({ user }) {
 
         if (!video.paused && video.readyState >= 2) {
           try {
-            const rect = video.getBoundingClientRect();
-            canvas.width = rect.width || 640;
-            canvas.height = rect.height || 480;
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
 
             const interpolated = human.next(human.result);
             
@@ -257,7 +302,12 @@ function Recorder({ user }) {
               drawPoints: true, 
             };
             
-            await human.draw.all(canvas, interpolated, drawOptions);
+            if (showOverlay) {
+              await human.draw.all(canvas, interpolated, drawOptions);
+            }
+            else {
+              ctx.clearRect(0, 0, canvas.width, canvas.height); // keep canvas invisible
+            }
             
           } catch (error) {
             console.error('Draw error:', error);
@@ -301,7 +351,8 @@ function Recorder({ user }) {
             left: 0,
             pointerEvents: 'none',
             width: '100%',
-            height: '100%'
+            height: '100%',
+            visibility: showOverlay ? 'visible' : 'hidden'
           }}
         />
         {error && (
@@ -336,6 +387,7 @@ function Recorder({ user }) {
     if (FaceAnalysisMetrics.reportEyeContact) {
       FaceAnalysisMetrics.reportEyeContact(metrics);
     }
+
     
     analyzeAndUploadVideo(blob, blobUrl, user, FaceMetrics);
   };
@@ -511,13 +563,14 @@ function Recorder({ user }) {
                           }
                           stream={status === "idle" ? idleStream : previewStream}
                           detect={status === "recording"}
+                          showOverlay={ showOverlay }
                         />
                       )}
                       <div className="svz-recorder-controls">
                         <button 
                           className="svz-recorder-start-btn" 
                           onClick={startRecording} 
-                          disabled={status === "recording"}
+                          disabled={status === "recording" || !modelsLoaded }
                         >
                           Start Recording
                         </button>
@@ -529,6 +582,14 @@ function Recorder({ user }) {
                           Stop Recording
                         </button>
                       </div>
+                      <label>
+                        <input 
+                          type="checkbox"
+                          checked={showOverlay}
+                          onChange={e => setShowOverlay(e.target.checked)}
+                        />
+                        <span>Show Overlay</span>
+                      </label>
                     </div>
                   )}
                 />

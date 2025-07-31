@@ -8,77 +8,34 @@ import './FaceMetricVisualizations.css';
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement, BarElement, annotationPlugin, zoomPlugin, Title);
 
 
+  export function gazeDirection(gestures) {
+    const irisEntries = gestures.filter(o => Object.hasOwn(o, 'iris'));
 
-  export function avg(p1, p2) {
-    return [(p1.x + p2.x) * 0.5, (p1.y + p2.y) * 0.5];
+    return irisEntries;
   }
 
-  export function norm(val, min, max) {
-    return Math.max(0, Math.min(1, (val - min) / (max - min)));
-  }
+export function calculateHeadOrientation(rotation) {
 
-  export function gazeDirection(landmarks, box) {
-    const L = landmarks.getLeftEye();
-    const R = landmarks.getRightEye();
-
-    const [lx, ly] = avg(L[0], L[3]);
-    const [rx, ry] = avg(R[0], R[3]);
-
-    const pupil = {
-      x: (lx + rx) * 0.5,
-      y: (ly + ry) * 0.5,
-    };
-
-    const xMin = box.x;
-    const xMax = box.x + box.width;
-    const yMin = box.y;
-    const yMax = box.y + box.height;
-
-    const nx = norm(pupil.x, xMin, xMax);
-    const ny = norm(pupil.y, yMin, yMax);
-
-    if (ny < 0.30) {
-      return "UP";
-    }
-    if (nx < 0.38) {
-      return "RIGHT";
-    }
-    if (nx > 0.62) {
-      return "LEFT";
-    }
-    return "STRAIGHT";
-  }
-
-export function calculateHeadOrientation(landmarks, box) {
-  const nose = landmarks.getNose()[0];
-  const leftEye = landmarks.getLeftEye();
-  const rightEye = landmarks.getRightEye();
-
-  const eyeCenterX = (leftEye[0].x + leftEye[3].x + rightEye[0].x + rightEye[3].x) / 4;
-  const eyeCenterY = (leftEye[0].y + leftEye[3].y + rightEye[0].y + rightEye[3].y) / 4;
-
-  const boxCenterX = box.x + box.width * 0.5;
-  const boxCenterY = box.y + box.height * 0.5;
-
-  const yaw = (nose.x - boxCenterX) / (box.width * 0.5);
+  const yaw = rotation.angle.yaw;
   
-  const pitch = (nose.y - boxCenterY) / (box.height * 0.5);
-  
-  const clampedYaw = Math.max(-1, Math.min(1, yaw));
-  const clampedPitch = Math.max(-1, Math.min(1, pitch));
+  const pitch = rotation.angle.pitch;
 
-  return { yaw: clampedYaw, pitch: clampedPitch };
+  const gazeBearing = rotation.gaze.bearing;
+
+  return { yaw: yaw, pitch: pitch, gazeBearing: gazeBearing };
 }
 
-  export function updateOrientationMetrics(yaw, pitch, isEyeContact, metrics, frameNumber) {
+  export function updateOrientationMetrics(yaw, pitch, gaze, isEyeContact, metrics, frameNumber) {
     const m = metrics.current;
 
     m.yawHistory.push(yaw);
     m.pitchHistory.push(pitch);
+    m.gazeHistory.push(gaze);
 
     if (m.yawHistory.length > 100) {
       m.yawHistory.shift();
       m.pitchHistory.shift();
+      m.gazeHistory.shift();
     }
 
     const segment = m.currentSegment;
@@ -172,6 +129,7 @@ export function calculateHeadOrientation(landmarks, box) {
     const visualizationData = {
       yawHistory: [...m.yawHistory],
       pitchHistory: [...m.pitchHistory],
+      gazeHistory: [...m.gazeHistory],
       yawSpread,
       pitchSpread,
       eyeContactSegments: [...m.eyeContactSegments],
@@ -232,7 +190,8 @@ export function calculateHeadOrientation(landmarks, box) {
         () => analyzeHeadOrientationSpread(metrics),
         [metrics.current.yawHistory.length,
          metrics.current.pitchHistory.length,
-         metrics.eyeContactSegments,]
+         metrics.current.gazeHistory.length,
+         metrics.eyeContactSegments]
     );
 
     if (!stats) {
@@ -342,7 +301,7 @@ export function calculateHeadOrientation(landmarks, box) {
                                         pointRadius: 2,
                                         pointHoverRadius: 6,
                                         tension: 0.3
-                                    }
+                                    },
                                 ]
                             }}
                             options={{

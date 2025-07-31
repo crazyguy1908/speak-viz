@@ -157,6 +157,7 @@
   position: absolute;
   inset: 0;
   pointer-events: none;
+  border-radius: 18px;
 }
 
 .svz-recorder-analysis-result {
