@@ -1,11 +1,15 @@
-'use client'
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { supabase } from '../../supabaseClient';
-import Recorder from '../components/recorder';
-import Navbar from '../components/navbar';
+"use client";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
+import { supabase } from "../../supabaseClient";
+import Navbar from "../components/navbar";
 
-
+// Dynamically import Recorder component with no SSR
+const Recorder = dynamic(() => import("../components/recorder"), {
+  ssr: false,
+  loading: () => <div className="text-center">Loading recorder...</div>,
+});
 
 export default function RecorderPage() {
   const [session, setSession] = useState(null);
@@ -16,16 +20,17 @@ export default function RecorderPage() {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setLoading(false);
-      
       if (!session) {
-        router.push('/');
+        router.push("/");
       }
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       if (!session) {
-        router.push('/');
+        router.push("/");
       }
     });
 
