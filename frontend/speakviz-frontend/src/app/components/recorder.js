@@ -9,6 +9,7 @@ import Logout from "./logout";
 import Navbar from "./navbar";
 import { Card, CardContent } from "@/components/ui/card";
 import "./recorder.css";
+import AnalysisResults from "./AnalysisResult";
 
 const API_URL = "http://localhost:8000/analyze";
 

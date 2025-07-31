@@ -251,6 +251,7 @@ class VoiceAnalyzer:
                             f"be very specific with your feedback giving tanglible improvments and refer to the transcript if required for specific phrases etc"
                             f"in addition refer to the emphasised words in the context of the audio an offer feedback regarding the same ONLY IF APPLICABLES"
                             f"only talk about emphasis if it is relavent. DO NOT TALK ABOUT IT EVERY TIME"
+                            f" start the paragraph for each strength with 1* and end with *1 and so on and so forth for the other 2 points, incrementing the number to correspond witht the point. for weaknesses follow the same pattern except use # instead of *"
             )
 
             # rest of your existing code stays the same
