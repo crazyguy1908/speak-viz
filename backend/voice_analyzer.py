@@ -249,9 +249,14 @@ class VoiceAnalyzer:
                             f"GIVE 3 STRENGTHS AND 3 Weaknesses. DO NOT say things like based on the json metric just give the metric and just give the 6 points."
                             f"Refer to the speaker as you and write a minimum of 50 words for each point. The strenghts and weaknesses should not be similar. additionally do not mention any missing metrics or exact value. say thing like high wpm or low wpm"
                             f"be very specific with your feedback giving tanglible improvments and refer to the transcript if required for specific phrases etc"
-                            f"in addition refer to the emphasised words in the context of the audio an offer feedback regarding the same ONLY IF APPLICABLES"
+                            f"in addition refer to the emphasised words in the context of the audio an offer feedback regarding the same ONLY IF APPLICABLE. ONLY TALK ABOUT EMPHASIS OF THERE ARE 1-2 emphasised words in a scentence. if there are more or less dont talk about it"
                             f"only talk about emphasis if it is relavent. DO NOT TALK ABOUT IT EVERY TIME"
-                            f" start the paragraph for each strength with 1* and end with *1 and so on and so forth for the other 2 points, incrementing the number to correspond witht the point. for weaknesses follow the same pattern except use # instead of *"
+                            f" start the paragraph for strength 1 with 1* and end it with *1"
+                            f" start the paragraph for strength 2 with 2* and end it with *2"
+                            f" start the paragraph for strength 3 with 3* and end it with *3"
+                            f" start the paragraph for weakness 1 with 1# and end it with #1"
+                            f" start the paragraph for weakness 2 with 2# and end it with #2"
+                            f" start the paragraph for weakness 3 with 4# and end it with #3"
             )
 
             # rest of your existing code stays the same
