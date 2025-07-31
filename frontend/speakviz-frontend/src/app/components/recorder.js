@@ -2,13 +2,13 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { ReactMediaRecorder } from "react-media-recorder";
-import { supabase } from '../../supabaseClient';
+import { supabase } from "../../supabaseClient";
 import * as FaceAnalysisMetrics from "./FaceAnalysisMetrics";
 import FaceMetricVisualizations from "./FaceAnalysisMetrics";
 import Logout from "./logout";
 import Navbar from "./navbar";
 import { Card, CardContent } from "@/components/ui/card";
-import './recorder.css';
+import "./recorder.css";
 
 const API_URL = "http://localhost:8000/analyze";
 
@@ -19,19 +19,21 @@ function Recorder({ user }) {
   const [feedback, setFeedback] = useState("");
   const [recommendations, setRecommendations] = useState("");
   const [selectedContext, setSelectedContext] = useState("general");
+  const [analysisData, setAnalysisData] = useState(null);
   const [showOverlay, setShowOverlay] = useState(false);
-  
 
   const metrics = useRef({
     frames: 0,
     eyeContactFrames: 0,
-    yawSum: 0, yawSq: 0,
-    movePx: 0, lastBox: null,
+    yawSum: 0,
+    yawSq: 0,
+    movePx: 0,
+    lastBox: null,
     yawHistory: [],
     pitchHistory: [],
     gazeHistory: [],
     eyeContactSegments: [],
-    currentSegment: { start: 0, eyeContactFrames: 0, totalFrames: 0 }
+    currentSegment: { start: 0, eyeContactFrames: 0, totalFrames: 0 },
   });
 
   const contexts = [
@@ -49,7 +51,7 @@ function Recorder({ user }) {
   const resetMetrics = () => {
     metrics.current.frames = 0;
     metrics.current.eyeContactFrames = 0;
-  }
+  };
 
   const VideoPreview = ({ stream, className, detect, showOverlay }) => {
     const videoRef = useRef(null);
@@ -61,25 +63,25 @@ function Recorder({ user }) {
 
     // Human configuration - optimized for face-only detection
     const humanConfig = {
-      backend: 'webgl',
-      modelBasePath: '/human-models', 
+      backend: "webgl",
+      modelBasePath: "/human-models",
       filter: { enabled: true, equalization: false, flip: false },
-      face: { 
-        enabled: true, 
-        detector: { rotation: true }, 
-        mesh: { enabled: true }, 
-        attention: { enabled: false }, 
-        iris: { enabled: true }, 
-        description: { enabled: false }, 
-        emotion: { enabled: false }, 
-        antispoof: { enabled: false }, 
-        liveness: { enabled: false } 
+      face: {
+        enabled: true,
+        detector: { rotation: true },
+        mesh: { enabled: true },
+        attention: { enabled: false },
+        iris: { enabled: true },
+        description: { enabled: false },
+        emotion: { enabled: false },
+        antispoof: { enabled: false },
+        liveness: { enabled: false },
       },
-      body: { enabled: false }, 
-      hand: { enabled: false }, 
-      object: { enabled: false }, 
-      segmentation: { enabled: false }, 
-      gesture: { enabled: true }, 
+      body: { enabled: false },
+      hand: { enabled: false },
+      object: { enabled: false },
+      segmentation: { enabled: false },
+      gesture: { enabled: true },
       debug: false,
     };
 
@@ -88,32 +90,32 @@ function Recorder({ user }) {
 
       const loadHuman = async () => {
         try {
-          console.log('Loading Human library...');
-          const { default: Human } = await import('@vladmandic/human');
+          console.log("Loading Human library...");
+          const { default: Human } = await import("@vladmandic/human");
 
           const h = new Human(humanConfig);
 
-          console.log('Loading face models only...');
+          console.log("Loading face models only...");
           await h.load();
-          
+
           if (h.tf) {
-            await h.tf.setBackend('webgl');
+            await h.tf.setBackend("webgl");
             await h.tf.ready();
-            console.log('TensorFlow backend ready:', h.tf.getBackend());
+            console.log("TensorFlow backend ready:", h.tf.getBackend());
           }
 
           // Warmup for better performance
-          console.log('Warming up...');
+          console.log("Warming up...");
           await h.warmup();
 
           if (!cancelled) {
             setHuman(h);
             setModelsLoaded(true);
-            console.log('🧑‍🚀 Human ready - Face detection only');
-            console.log('Models loaded:', h.models.loaded());
+            console.log("🧑‍🚀 Human ready - Face detection only");
+            console.log("Models loaded:", h.models.loaded());
           }
         } catch (err) {
-          console.error('Failed to load Human library:', err);
+          console.error("Failed to load Human library:", err);
           setError(err.message);
           if (!cancelled) {
             setModelsLoaded(false);
@@ -121,12 +123,12 @@ function Recorder({ user }) {
         }
       };
 
-      if (typeof window !== 'undefined') {
+      if (typeof window !== "undefined") {
         loadHuman();
       }
 
-      return () => { 
-        cancelled = true; 
+      return () => {
+        cancelled = true;
         detectionLoopRef.current = false;
         drawLoopRef.current = false;
       };
@@ -137,20 +139,20 @@ function Recorder({ user }) {
 
       const video = videoRef.current;
       video.srcObject = stream;
-      
+
       const playVideo = async () => {
         try {
           await video.play();
-          console.log('Video playing');
+          console.log("Video playing");
         } catch (error) {
-          console.error('Error playing video:', error);
+          console.error("Error playing video:", error);
         }
       };
 
-      video.addEventListener('loadedmetadata', playVideo);
-      
+      video.addEventListener("loadedmetadata", playVideo);
+
       return () => {
-        video.removeEventListener('loadedmetadata', playVideo);
+        video.removeEventListener("loadedmetadata", playVideo);
       };
     }, [stream]);
 
@@ -166,31 +168,41 @@ function Recorder({ user }) {
 
       const detectionLoop = async () => {
         if (!detectionLoopRef.current) return;
-        
+
         if (!video.paused && video.readyState >= 2) {
           try {
             await human.detect(video);
 
-            if (human.result && human.result.face && human.result.face.length > 0) {
+            if (
+              human.result &&
+              human.result.face &&
+              human.result.face.length > 0
+            ) {
               const gestures = human.result?.gesture ?? [];
               const faces = human.result?.face ?? [];
               const rot = faces[0].rotation;
 
               const gaze = FaceAnalysisMetrics.gazeDirection(gestures);
 
-              const inEyeContact = 
-                gaze.some(o => o.gesture === 'looking center') &&
-                gaze.some(o => o.gesture === 'facing center');
-              
-              const { yaw, pitch, gazeBearing } = FaceAnalysisMetrics.calculateHeadOrientation(rot);
+              const inEyeContact =
+                gaze.some((o) => o.gesture === "looking center") &&
+                gaze.some((o) => o.gesture === "facing center");
+
+              const { yaw, pitch, gazeBearing } =
+                FaceAnalysisMetrics.calculateHeadOrientation(rot);
 
               metrics.current.frames++;
               if (inEyeContact) metrics.current.eyeContactFrames++;
 
-              FaceAnalysisMetrics.updateOrientationMetrics(yaw, pitch, gazeBearing, inEyeContact, metrics, metrics.current.frames);
+              FaceAnalysisMetrics.updateOrientationMetrics(
+                yaw,
+                pitch,
+                gazeBearing,
+                inEyeContact,
+                metrics,
+                metrics.current.frames
+              );
             }
-
-
 
             /* if (faces.length) {
               const rot = faces[0].rotation;
@@ -203,8 +215,8 @@ function Recorder({ user }) {
                 'roll', angle.roll,
                 'gaze', gaze.bearing
               );
-            } */             
-            
+            } */
+
             /* const irisEntries = gestures.filter(o => Object.hasOwn(o, 'iris')); 
             const eyeContact = [];
             const haveBothCenters =  
@@ -213,8 +225,7 @@ function Recorder({ user }) {
             if (haveBothCenters) {
               console.log("eye contact")
             } */
-            
-            
+
             // Process face data for metrics
             /* if (human.result && human.result.face && human.result.face.length > 0) {
               const f = human.result.face[0];
@@ -250,7 +261,7 @@ function Recorder({ user }) {
               }
             } */
           } catch (error) {
-            console.error('Detection error:', error);
+            console.error("Detection error:", error);
           }
         }
 
@@ -262,7 +273,9 @@ function Recorder({ user }) {
       if (video.readyState >= 2) {
         detectionLoop();
       } else {
-        video.addEventListener('loadeddata', () => detectionLoop(), { once: true });
+        video.addEventListener("loadeddata", () => detectionLoop(), {
+          once: true,
+        });
       }
 
       return () => {
@@ -279,7 +292,7 @@ function Recorder({ user }) {
 
       const video = videoRef.current;
       const canvas = canvasRef.current;
-      const ctx = canvas.getContext('2d');
+      const ctx = canvas.getContext("2d");
       drawLoopRef.current = true;
 
       const drawLoop = async () => {
@@ -291,26 +304,24 @@ function Recorder({ user }) {
             canvas.height = video.videoHeight;
 
             const interpolated = human.next(human.result);
-            
+
             const processed = await human.image(video);
-            
+
             human.draw.canvas(processed.canvas, canvas);
-            
+
             const drawOptions = {
               drawBoxes: true,
               drawLabels: true,
-              drawPoints: true, 
+              drawPoints: true,
             };
-            
+
             if (showOverlay) {
               await human.draw.all(canvas, interpolated, drawOptions);
-            }
-            else {
+            } else {
               ctx.clearRect(0, 0, canvas.width, canvas.height); // keep canvas invisible
             }
-            
           } catch (error) {
-            console.error('Draw error:', error);
+            console.error("Draw error:", error);
           }
         }
 
@@ -322,7 +333,7 @@ function Recorder({ user }) {
       if (video.readyState >= 2) {
         drawLoop();
       } else {
-        video.addEventListener('loadeddata', () => drawLoop(), { once: true });
+        video.addEventListener("loadeddata", () => drawLoop(), { once: true });
       }
 
       return () => {
@@ -333,35 +344,38 @@ function Recorder({ user }) {
     if (!stream) return null;
 
     return (
-      <div className="svz-video-preview-wrapper" style={{ position: 'relative' }}>
-        <video 
-          className={className} 
-          ref={videoRef} 
-          autoPlay 
-          muted 
+      <div
+        className="svz-video-preview-wrapper"
+        style={{ position: "relative" }}
+      >
+        <video
+          className={className}
+          ref={videoRef}
+          autoPlay
+          muted
           playsInline
-          style={{ width: '100%', height: 'auto' }}
+          style={{ width: "100%", height: "auto" }}
         />
         <canvas
           ref={canvasRef}
           className="svz-video-preview-canvas"
           style={{
-            position: 'absolute',
+            position: "absolute",
             top: 0,
             left: 0,
-            pointerEvents: 'none',
-            width: '100%',
-            height: '100%',
-            visibility: showOverlay ? 'visible' : 'hidden'
+            pointerEvents: "none",
+            width: "100%",
+            height: "100%",
+            visibility: showOverlay ? "visible" : "hidden",
           }}
         />
         {error && (
-          <div style={{ color: 'red', fontSize: '12px', marginTop: '5px' }}>
+          <div style={{ color: "red", fontSize: "12px", marginTop: "5px" }}>
             Face detection error: {error}
           </div>
         )}
         {!modelsLoaded && !error && (
-          <div style={{ color: 'yellow', fontSize: '12px', marginTop: '5px' }}>
+          <div style={{ color: "yellow", fontSize: "12px", marginTop: "5px" }}>
             Loading face detection models...
           </div>
         )}
@@ -376,19 +390,18 @@ function Recorder({ user }) {
     link.href = blobUrl;
     link.download = fileName;
     document.body.appendChild(link);
-    
+
     console.log(link);
     console.log(blobUrl);
-    
-    const FaceMetrics = FaceAnalysisMetrics.analyzeHeadOrientationSpread 
-      ? FaceAnalysisMetrics.analyzeHeadOrientationSpread(metrics) 
+
+    const FaceMetrics = FaceAnalysisMetrics.analyzeHeadOrientationSpread
+      ? FaceAnalysisMetrics.analyzeHeadOrientationSpread(metrics)
       : "No face metrics available";
-      
+
     if (FaceAnalysisMetrics.reportEyeContact) {
       FaceAnalysisMetrics.reportEyeContact(metrics);
     }
 
-    
     analyzeAndUploadVideo(blob, blobUrl, user, FaceMetrics);
   };
 
@@ -411,8 +424,8 @@ function Recorder({ user }) {
 
   const getVideoDuration = (url) => {
     return new Promise((resolve) => {
-      const video = document.createElement('video');
-      video.preload = 'metadata';
+      const video = document.createElement("video");
+      video.preload = "metadata";
       video.onloadedmetadata = () => {
         resolve(video.duration);
       };
@@ -427,38 +440,39 @@ function Recorder({ user }) {
     setIsUploading(true);
     setError(null);
     setUploadSuccess(false);
-    
+
     try {
       const formData = new FormData();
       formData.append("file", blob, "recording.webm");
       formData.append("context", selectedContext);
       formData.append("faceAnalysis", FaceMetrics || "");
-      
+
       console.log("Face Metrics:", FaceMetrics);
 
       const resp = await fetch(API_URL, {
         method: "POST",
         body: formData,
       });
-      
+
       if (!resp.ok) {
         const text = await resp.text();
         throw new Error(`Server responded ${resp.status}: ${text}`);
       }
-      
+
       const analysisData = await resp.json();
       console.log("Analysis:", analysisData.analysis);
       console.log("Feedback:", analysisData.feedback);
       console.log("Recommendations:", analysisData.recommendations);
-      
+
       setAnalysis(analysisData.analysis);
       setFeedback(analysisData.feedback);
       setRecommendations(analysisData.recommendations);
-      
-      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      setAnalysisData(analysisData);
+
+      const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
       const fileName = `video-${timestamp}.webm`;
       const filePath = `${user.id}/${fileName}`;
-      
+
       // Supabase upload code (commented out as in original)
       /*
       const { data: uploadData, error: uploadError } = await supabase.storage
@@ -500,7 +514,7 @@ function Recorder({ user }) {
       setTimeout(() => setUploadSuccess(false), 3000);
       */
     } catch (error) {
-      console.error('Upload error:', error);
+      console.error("Upload error:", error);
       setError(error.message);
     } finally {
       setIsUploading(false);
@@ -534,7 +548,9 @@ function Recorder({ user }) {
                     <div className="svz-recorder-main">
                       <h1 className="svz-recorder-status">{status}</h1>
                       <div className="svz-recorder-context">
-                        <label htmlFor="context-select">Speaking Context: </label>
+                        <label htmlFor="context-select">
+                          Speaking Context:{" "}
+                        </label>
                         <select
                           id="context-select"
                           value={selectedContext}
@@ -559,34 +575,38 @@ function Recorder({ user }) {
                       ) : (
                         <VideoPreview
                           className={
-                            status === "idle" ? "svz-recorder-video-player" : "svz-recorder-video-preview"
+                            status === "idle"
+                              ? "svz-recorder-video-player"
+                              : "svz-recorder-video-preview"
                           }
-                          stream={status === "idle" ? idleStream : previewStream}
+                          stream={
+                            status === "idle" ? idleStream : previewStream
+                          }
                           detect={status === "recording"}
-                          showOverlay={ showOverlay }
+                          showOverlay={showOverlay}
                         />
                       )}
                       <div className="svz-recorder-controls">
-                        <button 
-                          className="svz-recorder-start-btn" 
-                          onClick={startRecording} 
-                          disabled={status === "recording" || !modelsLoaded }
+                        <button
+                          className="svz-recorder-start-btn"
+                          onClick={startRecording}
+                          disabled={status === "recording" || !modelsLoaded}
                         >
                           Start Recording
                         </button>
-                        <button 
-                          className="svz-recorder-stop-btn" 
-                          onClick={stopRecording} 
+                        <button
+                          className="svz-recorder-stop-btn"
+                          onClick={stopRecording}
                           disabled={status === "idle"}
                         >
                           Stop Recording
                         </button>
                       </div>
                       <label>
-                        <input 
+                        <input
                           type="checkbox"
                           checked={showOverlay}
-                          onChange={e => setShowOverlay(e.target.checked)}
+                          onChange={(e) => setShowOverlay(e.target.checked)}
                         />
                         <span>Show Overlay</span>
                       </label>
@@ -596,18 +616,7 @@ function Recorder({ user }) {
               </CardContent>
             </Card>
             <FaceMetricVisualizations metrics={metrics} />
-            <div>
-              {(feedback || recommendations) && (
-                <div className="svz-recorder-analysis-result">
-                  {recommendations && (
-                    <>
-                      <h3>Recommendations</h3>
-                      <p>{recommendations}</p>
-                    </>
-                  )}
-                </div>
-              )}
-            </div>
+            {analysisData && <AnalysisResults analysisData={analysisData} />}
             <div className="svz-recorder-logout-wrap">
               <Logout />
             </div>
