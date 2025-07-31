@@ -3,16 +3,19 @@ import "./AnalysisResult.css";
 
 export default function AnalysisResults({ analysisData }) {
   const { feedback, recommendations, analysis } = analysisData;
-  const [showStrengths, setShowStrengths] = useState(true);
+  const [selectedSection, setSelectedSection] = useState("strengths");
   const [selectedPoint, setSelectedPoint] = useState(1);
 
   const parsePoints = (text, type) => {
-    const pattern =
-      type === "strengths" ? /(\d+)\*(.*?)\*\1/g : /(\d+)#(.*?)#\1/g;
+    const patterns = {
+      strengths: /(\d+)\*(.*?)\*\1/g,
+      weaknesses: /(\d+)#(.*?)#\1/g,
+      grammar: /(\d+)&(.*?)&\1/g,
+    };
 
     const matches = [];
     let match;
-    while ((match = pattern.exec(text)) !== null) {
+    while ((match = patterns[type].exec(text)) !== null) {
       matches.push({ number: match[1], content: match[2].trim() });
     }
     return matches;
@@ -22,6 +25,20 @@ export default function AnalysisResults({ analysisData }) {
 
   const strengths = parsePoints(recommendations, "strengths");
   const weaknesses = parsePoints(recommendations, "weaknesses");
+  const grammar = parsePoints(recommendations, "grammar");
+
+  const getCurrentPoints = () => {
+    switch (selectedSection) {
+      case "strengths":
+        return strengths;
+      case "weaknesses":
+        return weaknesses;
+      case "grammar":
+        return grammar;
+      default:
+        return [];
+    }
+  };
 
   return (
     <div className="svz-recorder-analysis-result">
@@ -29,22 +46,34 @@ export default function AnalysisResults({ analysisData }) {
         <h2 className="svz-analysis-title">Recommendations</h2>
         <div className="svz-points-toggle">
           <button
-            className={`svz-toggle-btn ${showStrengths ? "active" : ""}`}
-            onClick={() => setShowStrengths(true)}
+            className={`svz-toggle-btn ${
+              selectedSection === "strengths" ? "active" : ""
+            }`}
+            onClick={() => setSelectedSection("strengths")}
           >
             Strengths
           </button>
           <button
-            className={`svz-toggle-btn ${!showStrengths ? "active" : ""}`}
-            onClick={() => setShowStrengths(false)}
+            className={`svz-toggle-btn ${
+              selectedSection === "weaknesses" ? "active" : ""
+            }`}
+            onClick={() => setSelectedSection("weaknesses")}
           >
             Areas to Improve
+          </button>
+          <button
+            className={`svz-toggle-btn ${
+              selectedSection === "grammar" ? "active" : ""
+            }`}
+            onClick={() => setSelectedSection("grammar")}
+          >
+            Grammar
           </button>
         </div>
 
         <div className="svz-points-container">
           <div className="svz-points-sidebar">
-            {(showStrengths ? strengths : weaknesses).map((point) => (
+            {getCurrentPoints().map((point) => (
               <button
                 key={point.number}
                 className={`svz-point-btn ${
@@ -59,7 +88,7 @@ export default function AnalysisResults({ analysisData }) {
 
           <div className="svz-point-content">
             {
-              (showStrengths ? strengths : weaknesses).find(
+              getCurrentPoints().find(
                 (p) => parseInt(p.number) === selectedPoint
               )?.content
             }

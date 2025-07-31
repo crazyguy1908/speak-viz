@@ -238,25 +238,27 @@ class VoiceAnalyzer:
 
         try:
             genai.configure(api_key="AIzaSyA4j6MyrkAuGqf8cf0dbNnfXYgz75GDq1g")
-            model = genai.GenerativeModel('gemini-1.5-flash')
+            model = genai.GenerativeModel('gemini-2.5-flash-lite')
 
             prompt = (
-                f"Analyze the following JSON voice metrics, actionable recommendations. if you get face analysis, use it to improve the recommendations.\n\n"
-                            f"for improving public speaking. If a context is provided then assume the speaker is speaking in that context and provide tailored feedback.  {context_addition}\n\n"
-                            f"Metrics:\n{analysis_json}\n\nRecommendations:"
-                            f"{faceAnalysis}\n\n"
-                            f" analyze Grammar + clarity Keyword coverage Bad Vocabulary (Transition words, just, so, etc) Repetition / Conciseness (how much more is being said than it should)"
-                            f"GIVE 3 STRENGTHS AND 3 Weaknesses. DO NOT say things like based on the json metric just give the metric and just give the 6 points."
-                            f"Refer to the speaker as you and write a minimum of 50 words for each point. The strenghts and weaknesses should not be similar. additionally do not mention any missing metrics or exact value. say thing like high wpm or low wpm"
-                            f"be very specific with your feedback giving tanglible improvments and refer to the transcript if required for specific phrases etc"
-                            f"in addition refer to the emphasised words in the context of the audio an offer feedback regarding the same ONLY IF APPLICABLE. ONLY TALK ABOUT EMPHASIS OF THERE ARE 1-2 emphasised words in a scentence. if there are more or less dont talk about it"
-                            f"only talk about emphasis if it is relavent. DO NOT TALK ABOUT IT EVERY TIME"
-                            f" start the paragraph for strength 1 with 1* and end it with *1"
-                            f" start the paragraph for strength 2 with 2* and end it with *2"
-                            f" start the paragraph for strength 3 with 3* and end it with *3"
-                            f" start the paragraph for weakness 1 with 1# and end it with #1"
-                            f" start the paragraph for weakness 2 with 2# and end it with #2"
-                            f" start the paragraph for weakness 3 with 4# and end it with #3"
+                f"Analyze the following JSON voice metrics and face analysis data for public speaking feedback. {context_addition}\n\n"
+                f"Metrics:\n{analysis_json}\n\n"
+                f"Face Analysis:\n{faceAnalysis}\n\n"
+                f"First analyze voice and face metrics only:\n"
+                f"GIVE 3 STRENGTHS AND 3 WEAKNESSES focusing only on voice qualities (pitch, pace, volume, pauses) and facial expressions/movements. "
+                f"Write 50+ words for each point. Don't mention exact metrics - use descriptive terms like 'high' or 'low'.\n"
+                f"Start strength paragraphs with 1*, 2*, 3* and end with *1, *2, *3\n"
+                f"Start weakness paragraphs with 1#, 2#, 3# and end with #1, #2, #3\n\n"
+                f"Then provide 3 very brief points about:\n"
+                f"1. Grammar usage\n"
+                f"2. Keyword/transition word analysis\n" 
+                f"3. Vocabulary effectiveness\n"
+                f"Start these points with 1&, 2&, 3& and end with &1, &2, &3\n\n"
+                f"Be specific with feedback and reference transcript examples where relevant. Only discuss emphasis patterns if 1-2 emphasized words appear in a sentence."
+                f"THERE SHOULD BE 9 TOTAL POINTS: 3 strengths related to the metrics, 3 weaknesses related to the metrics and 3 points related to grammaer"
+                f"do not make the gramar text bold or add highlights. format it similar to the strengths and weaknesses where it is just the points"
+                f" do not add any styling to the text or asteriks anywhere except where previously specified(only the relavent strength points)"
+                f"do not mention any data is missing or anything like that"
             )
 
             # rest of your existing code stays the same
