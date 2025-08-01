@@ -10,6 +10,7 @@ import Navbar from "./navbar";
 import { Card, CardContent } from "@/components/ui/card";
 import "./recorder.css";
 import AnalysisResults from "./AnalysisResult";
+import WaitingAnimation from "./WaitingAnimation";
 
 const API_URL =
   process.env.NODE_ENV === "development"
@@ -341,14 +342,14 @@ function Recorder({ user }) {
     console.log(link);
     console.log(blobUrl);
 
-    const FaceMetrics = FaceAnalysisMetrics.analyzeHeadOrientationSpread
-      ? FaceAnalysisMetrics.analyzeHeadOrientationSpread(faceAnalysis)
-      : "No face metrics available";
+    const faceAnalysis =
+      FaceAnalysisMetrics.analyzeHeadOrientationSpread(metrics);
+    console.log(faceAnalysis);
     if (FaceAnalysisMetrics.reportEyeContact) {
       FaceAnalysisMetrics.reportEyeContact(metrics);
     }
 
-    analyzeAndUploadVideo(blob, blobUrl, user, FaceMetrics);
+    analyzeAndUploadVideo(blob, blobUrl, user, faceAnalysis);
   };
 
   useEffect(() => {
@@ -367,6 +368,8 @@ function Recorder({ user }) {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [error, setError] = useState(null);
+  const [showWaitingAnimation, setShowWaitingAnimation] = useState(false);
+  const [waitingMessage, setWaitingMessage] = useState("Analyzing your recording and generating feedback...");
 
   const getVideoDuration = (url) => {
     return new Promise((resolve) => {
@@ -399,8 +402,10 @@ function Recorder({ user }) {
     };
   };
 
-  const analyzeAndUploadVideo = async (blob, blobUrl, user, FaceMetrics) => {
+  const analyzeAndUploadVideo = async (blob, blobUrl, user, faceAnalysis) => {
     setIsUploading(true);
+    setShowWaitingAnimation(true);
+    setWaitingMessage("Analyzing your recording and generating feedback...");
     setError(null);
     setUploadSuccess(false);
 
@@ -408,9 +413,7 @@ function Recorder({ user }) {
       const formData = new FormData();
       formData.append("file", blob, "recording.webm");
       formData.append("context", selectedContext);
-      formData.append("faceAnalysis", FaceMetrics || "");
-
-      console.log("Face Metrics:", FaceMetrics);
+      formData.append("faceAnalysis", faceAnalysis || "");
 
       const resp = await fetch(API_URL, {
         method: "POST",
@@ -479,17 +482,26 @@ function Recorder({ user }) {
 
       console.log("Video metadata saved:", dbData);
       setUploadSuccess(true);
-      setTimeout(() => setUploadSuccess(false), 3000);
+      setWaitingMessage("Analysis complete!");
+      setTimeout(() => {
+        setUploadSuccess(false);
+        setShowWaitingAnimation(false);
+      }, 2000);
     } catch (error) {
       console.error("Upload error:", error);
       setError(error.message);
     } finally {
       setIsUploading(false);
+      setShowWaitingAnimation(false);
     }
   };
 
   return (
     <>
+      <WaitingAnimation 
+        isVisible={showWaitingAnimation} 
+        message={waitingMessage}
+      />
       <div className="svz-recorder-root">
         <Navbar />
         <div className="svz-recorder-container">
