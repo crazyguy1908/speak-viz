@@ -380,6 +380,23 @@ function Recorder({ user }) {
     });
   };
 
+  const parseRecommendations = (recommendations) => {
+    const parsePoints = (text, pattern) => {
+      const matches = [];
+      let match;
+      while ((match = pattern.exec(text)) !== null) {
+        matches.push(match[2].trim());
+      }
+      return matches;
+    };
+
+    return {
+      strengths: parsePoints(recommendations, /(\d+)\*(.*?)\*\1/g),
+      weaknesses: parsePoints(recommendations, /(\d+)#(.*?)#\1/g),
+      grammar_points: parsePoints(recommendations, /(\d+)&(.*?)&\1/g),
+    };
+  };
+
   const analyzeAndUploadVideo = async (blob, blobUrl, user, FaceMetrics) => {
     setIsUploading(true);
     setError(null);
@@ -432,6 +449,10 @@ function Recorder({ user }) {
 
       const videoDuration = await getVideoDuration(blobUrl);
 
+      const parsedRecommendations = parseRecommendations(
+        analysisData.recommendations
+      );
+
       const { data: dbData, error: dbError } = await supabase
         .from("videos")
         .insert([
@@ -442,6 +463,9 @@ function Recorder({ user }) {
             file_size: blob.size,
             duration: videoDuration,
             recommendations: analysisData.recommendations,
+            strengths: parsedRecommendations.strengths,
+            weaknesses: parsedRecommendations.weaknesses,
+            grammar_points: parsedRecommendations.grammar_points,
             created_at: new Date().toISOString(),
           },
         ])

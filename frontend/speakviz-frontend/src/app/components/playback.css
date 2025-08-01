@@ -79,4 +79,29 @@
 }
 .svz-playback-msg-empty {
   color: #6b7280;
-} 
+}
+.svz-playback-recommendations {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 0.5rem;
+}
+
+.svz-playback-section {
+  margin-bottom: 1rem;
+}
+
+.svz-playback-section h4 {
+  margin-bottom: 0.5rem;
+  color: #333;
+}
+
+.svz-playback-section ul {
+  margin: 0;
+  padding-left: 1.5rem;
+}
+
+.svz-playback-section li {
+  margin-bottom: 0.25rem;
+  color: #666;
+}
