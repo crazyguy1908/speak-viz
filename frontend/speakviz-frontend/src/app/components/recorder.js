@@ -11,7 +11,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import "./recorder.css";
 import AnalysisResults from "./AnalysisResult";
 
-const API_URL = "http://localhost:8000/analyze";
+const API_URL = "http://speakviz.ddns.net:8089/analyze";
 
 function Recorder({ user }) {
   const [idleStream, setIdleStream] = useState(null);
@@ -475,24 +475,24 @@ function Recorder({ user }) {
       const filePath = `${user.id}/${fileName}`;
 
       // Supabase upload code (commented out as in original)
-      /*
+
       const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('videos')
+        .from("videos")
         .upload(filePath, blob, {
-          contentType: 'video/webm',
-          upsert: false
+          contentType: "video/webm",
+          upsert: false,
         });
-      
+
       if (uploadError) {
         throw uploadError;
       }
-    
-      console.log('File uploaded successfully:', uploadData);
-      
+
+      console.log("File uploaded successfully:", uploadData);
+
       const videoDuration = await getVideoDuration(blobUrl);
-      
+
       const { data: dbData, error: dbError } = await supabase
-        .from('videos')
+        .from("videos")
         .insert([
           {
             user_id: user.id,
@@ -501,19 +501,18 @@ function Recorder({ user }) {
             file_size: blob.size,
             duration: videoDuration,
             recommendations: analysisData.recommendations,
-            created_at: new Date().toISOString()
-          }
+            created_at: new Date().toISOString(),
+          },
         ])
         .select();
-      
+
       if (dbError) {
         throw dbError;
       }
-      
-      console.log('Video metadata saved:', dbData);
+
+      console.log("Video metadata saved:", dbData);
       setUploadSuccess(true);
       setTimeout(() => setUploadSuccess(false), 3000);
-      */
     } catch (error) {
       console.error("Upload error:", error);
       setError(error.message);
