@@ -41,7 +41,6 @@ async def analyze_audio(file: UploadFile = File(...), context: str = Form("gener
             if os.path.exists(p): os.remove(p)
 
     return JSONResponse({
-        'feedback': feedback,
         'recommendations': recommendations,
         'analysis': analysis,
     })
