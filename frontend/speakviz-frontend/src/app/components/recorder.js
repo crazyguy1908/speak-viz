@@ -620,7 +620,7 @@ function Recorder({ user }) {
               </CardContent>
             </Card>
             <SpeechMetrics speechData={analysisData?.analysis} />
-            <FaceMetricVisualizations metrics={metrics} />
+            <FaceMetricVisualizations metrics={metrics} speechData={analysisData?.analysis} />
             {analysisData && <AnalysisResults analysisData={analysisData} />}
             <div className="svz-recorder-logout-wrap">
               <Logout />

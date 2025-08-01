@@ -283,7 +283,7 @@ function classifySegment(segment, yawSpread, pitchSpread) {
   }
 }
 
-export default function FaceMetricVisualizations({ metrics }) {
+export default function FaceMetricVisualizations({ metrics, speechData, isStopped = false }) {
   const [selectedChart, setSelectedChart] = useState("line");
   const [hoveredSegment, setHoveredSegment] = useState(null);
   const lineChartRef = useRef(null);
@@ -424,8 +424,16 @@ export default function FaceMetricVisualizations({ metrics }) {
               >
                 🍩 Eye Contact
               </button>
+              <button
+                className={`selector-btn ${
+                  selectedChart === "speech" ? "active" : ""
+                }`}
+                onClick={() => setSelectedChart("speech")}
+              >
+                🎤 Speech Analysis
+              </button>
             </div>
-            {(selectedChart === "line" || selectedChart === "scatter") && (
+            {(selectedChart === "line" || selectedChart === "scatter" || selectedChart === "speech") && (
               <button className="reset-btn" onClick={resetZoom}>
                 🔄 Reset Zoom
               </button>
@@ -757,6 +765,157 @@ export default function FaceMetricVisualizations({ metrics }) {
                     },
                   }}
                 />
+              ) : selectedChart === "speech" && speechData && speechData.wpm_history && speechData.wpm_history.length > 0 ? (
+                <Line
+                  data={{
+                    labels: speechData.wpm_history.map((_, index) => index),
+                    datasets: [
+                      {
+                        label: "Words Per Minute",
+                        data: speechData.wpm_history,
+                        borderColor: "#06b6d4",
+                        backgroundColor: "rgba(6, 182, 212, 0.1)",
+                        borderWidth: 2,
+                        pointRadius: 2,
+                        pointHoverRadius: 5,
+                        tension: 0.2,
+                        yAxisID: 'y',
+                      },
+                      {
+                        label: "Loudness (LUFS)",
+                        data: speechData.loudness_history,
+                        borderColor: "#f59e0b",
+                        backgroundColor: "rgba(245, 158, 11, 0.1)",
+                        borderWidth: 2,
+                        pointRadius: 2,
+                        pointHoverRadius: 5,
+                        tension: 0.2,
+                        yAxisID: 'y1',
+                      },
+                    ],
+                  }}
+                  options={{
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: true,
+                    plugins: {
+                      zoom: {
+                        zoom: {
+                          wheel: { enabled: true },
+                          pinch: { enabled: true },
+                          mode: "x",
+                        },
+                        pan: {
+                          enabled: true,
+                          mode: "x",
+                        },
+                        limits: {
+                          x: {
+                            min: 0,
+                            max: speechData.wpm_history.length - 1,
+                          },
+                        },
+                      },
+                      legend: {
+                        position: "top",
+                        labels: {
+                          font: {
+                            size: 12,
+                            family: "Inter, system-ui, sans-serif",
+                          },
+                          padding: 20,
+                          usePointStyle: true,
+                          pointStyle: "line",
+                        },
+                      },
+                      title: {
+                        display: true,
+                        text: "Speech Analysis Over Time",
+                        font: {
+                          size: 16,
+                          weight: "bold",
+                          family: "Inter, system-ui, sans-serif",
+                        },
+                        padding: {
+                          top: 10,
+                          bottom: 20,
+                        },
+                      },
+                    },
+                    scales: {
+                      y: {
+                        type: 'linear',
+                        display: true,
+                        position: 'left',
+                        title: {
+                          display: true,
+                          text: "Words Per Minute",
+                          font: {
+                            size: 12,
+                            family: "Inter, system-ui, sans-serif",
+                          },
+                        },
+                        grid: {
+                          color: "rgba(0, 0, 0, 0.05)",
+                          lineWidth: 1,
+                        },
+                        ticks: {
+                          font: {
+                            size: 11,
+                          },
+                        },
+                      },
+                      y1: {
+                        type: 'linear',
+                        display: true,
+                        position: 'right',
+                        title: {
+                          display: true,
+                          text: "Loudness (LUFS)",
+                          font: {
+                            size: 12,
+                            family: "Inter, system-ui, sans-serif",
+                          },
+                        },
+                        grid: {
+                          drawOnChartArea: false,
+                        },
+                        ticks: {
+                          font: {
+                            size: 11,
+                          },
+                        },
+                      },
+                      x: {
+                        title: {
+                          display: true,
+                          text: "Speech Segment",
+                          font: {
+                            size: 12,
+                            family: "Inter, system-ui, sans-serif",
+                          },
+                        },
+                        grid: {
+                          color: "rgba(0, 0, 0, 0.05)",
+                          lineWidth: 1,
+                        },
+                        ticks: {
+                          font: {
+                            size: 11,
+                          },
+                        },
+                      },
+                    },
+                    interaction: {
+                      intersect: true,
+                      mode: "nearest",
+                    },
+                  }}
+                />
+              ) : (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#6b7280' }}>
+                  {selectedChart === "speech" ? "No speech data available" : "No data available"}
+                </div>
               )}
             </div>
           )}
@@ -839,6 +998,26 @@ export default function FaceMetricVisualizations({ metrics }) {
                 <strong>Benchmarks:</strong> 80%+ (Excellent), 60-79% (Good),
                 40-59% (Needs improvement), &lt;40% (Poor).{" "}
                 <strong>Tip:</strong> Look at camera lens, not screen.
+              </p>
+            </div>
+          )}
+
+          {selectedChart === "speech" && (
+            <div className="guide-content">
+              <p>
+                <strong>🎤 Speech Analysis:</strong> Shows WPM and Loudness over time.
+                <strong>Blue line = Words Per Minute</strong>,{" "}
+                <strong>Orange line = Loudness (LUFS)</strong>.
+              </p>
+              <p>
+                <strong>Pattern Analysis:</strong>{" "}
+                <em>High Volume + Low Speed</em> = Significant words/emphasis,{" "}
+                <em>Low Volume + High Speed</em> = Insignificant words/fillers,{" "}
+                <em>Both Low or Both High</em> = Poor practice, needs improvement.
+              </p>
+              <p>
+                <strong>Controls:</strong> Mouse wheel to zoom horizontally,
+                click-drag to pan, "Reset Zoom" to return to full view.
               </p>
             </div>
           )}

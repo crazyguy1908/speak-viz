@@ -10,6 +10,10 @@ import pyloudnorm as pyln
 from transformers import AutoFeatureExtractor, AutoModelForAudioClassification
 import torch
 import torchaudio
+import re
+import string
+
+
 class VoiceAnalyzer:
     def __init__(self, sample_rate=16000, channels=1):
         self.sample_rate = sample_rate
@@ -112,40 +116,52 @@ class VoiceAnalyzer:
         print(f"Found {len(found_fillers)} filler words: {found_fillers}")
         return found_fillers
 
-    def detect_repetitions(self, words, transcript):
-        """Detect repeated words and phrases in the transcript."""
-        # Extract word list from words with timing
-        word_list = [word['word'].lower().strip('.,!?;:') for word in words]
+    def generate_speech_segments(self, words, lld_df, sr_lld=100):
+        """Generate time-series data for WPM and Loudness in segments."""
+        if not words or len(words) < 2:
+            return [], []
         
-        # Filter out very short words and common words
-        common_words = {'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'is', 'are', 'was', 'were', 'be', 'been', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could', 'should', 'may', 'might', 'can', 'this', 'that', 'these', 'those', 'i', 'you', 'he', 'she', 'it', 'we', 'they', 'me', 'him', 'her', 'us', 'them', 'my', 'your', 'his', 'her', 'its', 'our', 'their'}
+        # Create segments of 3-5 words each
+        segment_size = min(4, max(2, len(words) // 10))  # Adaptive segment size
+        segments = []
         
-        # Count word frequencies
-        word_counts = {}
-        for word in word_list:
-            if len(word) > 2 and word not in common_words:
-                word_counts[word] = word_counts.get(word, 0) + 1
+        for i in range(0, len(words), segment_size):
+            segment_words = words[i:i + segment_size]
+            if len(segment_words) < 2:
+                continue
+                
+            start_time = segment_words[0]['start']
+            end_time = segment_words[-1]['end']
+            duration = end_time - start_time
+            
+            # Calculate WPM for this segment
+            word_count = len(segment_words)
+            wpm = (word_count / duration) * 60 if duration > 0 else 0
+            
+            # Calculate average loudness for this segment
+            start_frame = int(start_time * sr_lld)
+            end_frame = int(end_time * sr_lld)
+            
+            if start_frame < len(lld_df) and end_frame < len(lld_df):
+                segment_loudness = lld_df['Loudness_sma3'].iloc[start_frame:end_frame].mean()
+            else:
+                segment_loudness = -50  # Default quiet value
+            
+            segments.append({
+                'start_time': start_time,
+                'end_time': end_time,
+                'wpm': wpm,
+                'loudness': segment_loudness,
+                'words': [w['word'] for w in segment_words]
+            })
         
-        # Find repeated words (appearing more than once)
-        repeated_words = {word: count for word, count in word_counts.items() if count > 1}
+        # Extract time series data
+        wpm_history = [seg['wpm'] for seg in segments]
+        loudness_history = [seg['loudness'] for seg in segments]
         
-        # Calculate repetition percentage
-        total_words = len(word_list)
-        repeated_word_count = sum(repeated_words.values()) - len(repeated_words)  # Subtract one occurrence of each word
-        repetition_percentage = (repeated_word_count / total_words * 100) if total_words > 0 else 0
-        
-        # Find most repeated words
-        top_repetitions = sorted(repeated_words.items(), key=lambda x: x[1], reverse=True)[:5]
-        
-        print(f"Repetition percentage: {repetition_percentage:.1f}%")
-        print(f"Top repeated words: {top_repetitions}")
-        
-        return {
-            'percentage': repetition_percentage,
-            'repeated_words': repeated_words,
-            'top_repetitions': top_repetitions,
-            'total_repeated_instances': repeated_word_count
-        }
+        print(f"Generated {len(segments)} speech segments")
+        return wpm_history, loudness_history
+
 
     def _cleanup_files(self, *files):
         """Clean up temporary and processed audio files."""
@@ -254,7 +270,7 @@ class VoiceAnalyzer:
                 return {"label": top_label, "scores": emotion_scores}
             emphasized_words = self.detect_emphasized_words(audio_file, None, words, transcript)
             filler_words = self.detect_filler_words(words, transcript)
-            repetition_data = self.detect_repetitions(words, transcript)
+            wpm_history, loudness_history = self.generate_speech_segments(words, lld_df)
             
             analysis = {
                 'transcription': transcript,
@@ -265,7 +281,8 @@ class VoiceAnalyzer:
                 'pitch_stats': pitch_stats,
                 'emphasized_words': emphasized_words,
                 'filler_words': filler_words,
-                'repetition_data': repetition_data
+                'wpm_history': wpm_history,
+                'loudness_history': loudness_history
             }
             return analysis
             
