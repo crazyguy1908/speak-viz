@@ -11,7 +11,7 @@ from voice_analyzer import VoiceAnalyzer
 app = FastAPI(title="Voice Analysis API")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],            # e.g. ["http://localhost:3000"]
+    allow_origins=["*"],            
     allow_methods=["POST", "OPTIONS"],
     allow_headers=["*"],
 )

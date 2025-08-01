@@ -92,7 +92,6 @@ class VoiceAnalyzer:
 
     def detect_filler_words(self, words, transcript):
         """Detect common filler words in the transcript."""
-        # Separate single and multi-word fillers
         single_word_fillers = {
             'um', 'uh', 'er', 'ah', 'hmm', 'huh', 'like', 'basically', 
             'actually', 'literally', 'right', 'okay', 'so', 'well'
@@ -106,26 +105,22 @@ class VoiceAnalyzer:
         
         found_fillers = []
         
-        # Method 1: Check individual words from Whisper timestamps
         for word_obj in words:
             if 'word' in word_obj:
-                # Clean the word more thoroughly
                 clean_word = word_obj['word'].strip().lower()
-                # Remove common punctuation
                 clean_word = clean_word.strip('.,!?;:"()[]{}')
                 
                 if clean_word in single_word_fillers:
                     found_fillers.append(clean_word)
         
-        # Method 2: Use transcript text for multi-word fillers
+        # fallback 1 if above doesn't work
         transcript_lower = transcript.lower()
         for filler in multi_word_fillers:
             count = transcript_lower.count(filler)
             if count > 0:
                 found_fillers.extend([filler] * count)
         
-        # Method 3: Fallback - split transcript and check each word
-        # This catches cases where Whisper word timestamps might miss something
+        # fallback 2 if that doesn't work
         transcript_words = transcript.lower().split()
         for word in transcript_words:
             clean_word = word.strip('.,!?;:"()[]{}')
@@ -207,7 +202,6 @@ class VoiceAnalyzer:
                     pause_ends = pause_ends[1:]
                 if len(pause_starts) > len(pause_ends):
                     pause_starts = pause_starts[:-1]
-                # Calculate pause durations
                 pause_durations = [(end - start) / sr_lld for start, end in zip(pause_starts, pause_ends)
                                  if (end - start) / sr_lld >= min_pause_dur]
                 
@@ -234,7 +228,6 @@ class VoiceAnalyzer:
                 labels = self.model.config.id2label
                 emotion_scores = {labels[i]: float(probs[i]) for i in range(len(probs))}
                 
-                # Check if any emotion has confidence > 0.5
                 if all(score < 0.5 for score in emotion_scores.values()):
                     print("No strong emotions detected, defaulting to neutral")
                     return {"label": "neutral", "scores": emotion_scores}
@@ -341,7 +334,6 @@ class VoiceAnalyzer:
                 f"do not mention missing data at all"
             )
 
-            # rest of your existing code stays the same
             print("Generating Gemini recommendations...")
             response = model.generate_content(prompt)
             print("Gemini response received.")
