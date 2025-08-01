@@ -246,7 +246,6 @@ class VoiceAnalyzer:
                 return {"label": top_label, "scores": emotion_scores}
             emphasized_words = self.detect_emphasized_words(audio_file, None, words, transcript)
             filler_words = self.detect_filler_words(words, transcript)
-            repetition_data = self.detect_repetitions(words, transcript)
             
             analysis = {
                 'transcription': transcript,
