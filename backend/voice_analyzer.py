@@ -10,7 +10,9 @@ import pyloudnorm as pyln
 from transformers import AutoFeatureExtractor, AutoModelForAudioClassification
 import torch
 import torchaudio
-
+from dotenv import load_dotenv, dotenv_values 
+# loading variables from .env file
+load_dotenv() 
 
 
 class VoiceAnalyzer:
