@@ -5,6 +5,7 @@ import { ReactMediaRecorder } from "react-media-recorder";
 import { supabase } from "../../supabaseClient";
 import * as FaceAnalysisMetrics from "./FaceAnalysisMetrics";
 import FaceMetricVisualizations from "./FaceAnalysisMetrics";
+import SpeechMetrics from "./SpeechMetrics";
 import Logout from "./logout";
 import Navbar from "./navbar";
 import { Card, CardContent } from "@/components/ui/card";
@@ -68,6 +69,7 @@ function Recorder({ user }) {
     metrics.current.yawSum = 0;
     metrics.current.yawSq = 0;
     metrics.current.movePx = 0;
+    metrics.current.currentSegment = { start: 0, eyeContactFrames: 0, totalFrames: 0 }
   };
 
   const VideoPreview = ({ stream, className, detect, showOverlay }) => {
@@ -617,6 +619,7 @@ function Recorder({ user }) {
                 />
               </CardContent>
             </Card>
+            <SpeechMetrics speechData={analysisData?.analysis} />
             <FaceMetricVisualizations metrics={metrics} />
             {analysisData && <AnalysisResults analysisData={analysisData} />}
             <div className="svz-recorder-logout-wrap">

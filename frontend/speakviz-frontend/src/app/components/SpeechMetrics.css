@@ -1,0 +1,236 @@
+.svz-speech-metrics-container {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  width: 100%;
+  margin: 2rem 0;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  box-sizing: border-box;
+  padding: 1.5rem;
+  transition: all 0.3s ease;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+.svz-speech-metrics-container:hover {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.svz-speech-metrics-header {
+  margin-bottom: 1.5rem;
+}
+
+.svz-speech-metrics-title {
+  font-weight: 700;
+  font-size: 1.25rem;
+  color: #1f2937;
+  margin: 0;
+}
+
+.svz-speech-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.svz-metric-card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.25rem;
+  box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.06), 0 1px 2px -1px rgba(0, 0, 0, 0.03);
+  border: 1px solid #f3f4f6;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.svz-metric-card:hover {
+  box-shadow: 0 4px 8px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -1px rgba(0, 0, 0, 0.04);
+  transform: translateY(-1px);
+}
+
+.svz-metric-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.svz-metric-icon-text {
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.svz-metric-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.svz-metric-label {
+  font-size: 0.875rem;
+  color: #6b7280;
+  font-weight: 500;
+  margin-bottom: 0.25rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.svz-metric-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 0.25rem;
+  line-height: 1.2;
+}
+
+.svz-metric-details {
+  font-size: 0.75rem;
+  color: #9ca3af;
+  margin-bottom: 0.25rem;
+  line-height: 1.3;
+}
+
+.svz-metric-level {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Compact styles for stopped state */
+.svz-speech-metrics-container.stopped {
+  margin: 0;
+  padding: 1rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.08), 0 1px 2px -1px rgba(0, 0, 0, 0.04);
+}
+
+.svz-speech-metrics-container.stopped:hover {
+  box-shadow: 0 4px 8px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -1px rgba(0, 0, 0, 0.04);
+}
+
+.svz-speech-metrics-container.stopped .svz-speech-metrics-header {
+  margin-bottom: 1rem;
+}
+
+.svz-speech-metrics-container.stopped .svz-speech-metrics-title {
+  font-size: 1.1rem;
+}
+
+.svz-speech-metrics-container.stopped .svz-speech-metrics-grid {
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 0.75rem;
+}
+
+.svz-speech-metrics-container.stopped .svz-metric-card {
+  padding: 1rem;
+  border-radius: 8px;
+  gap: 0.75rem;
+}
+
+.svz-speech-metrics-container.stopped .svz-metric-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+}
+
+.svz-speech-metrics-container.stopped .svz-metric-icon-text {
+  font-size: 1.25rem;
+}
+
+.svz-speech-metrics-container.stopped .svz-metric-value {
+  font-size: 1.25rem;
+}
+
+.svz-speech-metrics-container.stopped .svz-metric-details {
+  font-size: 0.7rem;
+}
+
+.svz-speech-metrics-container.stopped .svz-metric-level {
+  font-size: 0.7rem;
+}
+
+/* Responsive design */
+@media (max-width: 1024px) {
+  .svz-speech-metrics-grid {
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  }
+  
+  .svz-speech-metrics-container.stopped .svz-speech-metrics-grid {
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .svz-speech-metrics-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+  
+  .svz-speech-metrics-container.stopped .svz-speech-metrics-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .svz-metric-card {
+    padding: 1rem;
+    gap: 0.75rem;
+  }
+  
+  .svz-speech-metrics-container.stopped .svz-metric-card {
+    padding: 0.75rem;
+  }
+  
+  .svz-metric-icon {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .svz-speech-metrics-container.stopped .svz-metric-icon {
+    width: 36px;
+    height: 36px;
+  }
+  
+  .svz-metric-icon-text {
+    font-size: 1.25rem;
+  }
+  
+  .svz-speech-metrics-container.stopped .svz-metric-icon-text {
+    font-size: 1.1rem;
+  }
+  
+  .svz-metric-value {
+    font-size: 1.25rem;
+  }
+  
+  .svz-speech-metrics-container.stopped .svz-metric-value {
+    font-size: 1.1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .svz-speech-metrics-container {
+    padding: 1rem;
+  }
+  
+  .svz-speech-metrics-container.stopped {
+    padding: 0.75rem;
+  }
+  
+  .svz-metric-card {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 0.75rem;
+  }
+  
+  .svz-speech-metrics-container.stopped .svz-metric-card {
+    gap: 0.5rem;
+  }
+  
+  .svz-metric-content {
+    width: 100%;
+  }
+} 
