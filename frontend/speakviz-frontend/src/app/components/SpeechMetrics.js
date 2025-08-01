@@ -11,7 +11,9 @@ export default function SpeechMetrics({ speechData, isStopped = false }) {
     loudness,
     pause_durations_s,
     emphasized_words,
-    tone_score
+    tone_score,
+    filler_words,
+    repetition_data
   } = speechData;
 
   // Calculate pause statistics
@@ -170,6 +172,48 @@ export default function SpeechMetrics({ speechData, isStopped = false }) {
                 ? `±${speechData.pitch_stats.std.toFixed(0)} Hz`
                 : 'No variation data'
               }
+            </div>
+          </div>
+        </div>
+
+        {/* Filler Words Card */}
+        <div className="svz-metric-card">
+          <div className="svz-metric-icon" style={{ backgroundColor: '#f59e0b20' }}>
+            <span className="svz-metric-icon-text">🤐</span>
+          </div>
+          <div className="svz-metric-content">
+            <div className="svz-metric-label">Filler Words</div>
+            <div className="svz-metric-value">{filler_words ? filler_words.length : 0}</div>
+            <div className="svz-metric-details">
+              {filler_words && filler_words.length > 0 
+                ? filler_words.slice(0, 3).join(', ') + (filler_words.length > 3 ? '...' : '')
+                : 'None detected'
+              }
+            </div>
+            <div className="svz-metric-level" style={{ color: filler_words && filler_words.length > 5 ? '#ef4444' : filler_words && filler_words.length > 2 ? '#f59e0b' : '#10b981' }}>
+              {filler_words && filler_words.length > 5 ? 'Many Fillers' : filler_words && filler_words.length > 2 ? 'Some Fillers' : 'Clean Speech'}
+            </div>
+          </div>
+        </div>
+
+        {/* Repetition Card */}
+        <div className="svz-metric-card">
+          <div className="svz-metric-icon" style={{ backgroundColor: '#8b5cf620' }}>
+            <span className="svz-metric-icon-text">🔄</span>
+          </div>
+          <div className="svz-metric-content">
+            <div className="svz-metric-label">Repetition</div>
+            <div className="svz-metric-value">
+              {repetition_data ? `${repetition_data.percentage.toFixed(1)}%` : 'N/A'}
+            </div>
+            <div className="svz-metric-details">
+              {repetition_data && repetition_data.top_repetitions.length > 0 
+                ? repetition_data.top_repetitions.slice(0, 2).map(([word, count]) => `${word} (${count})`).join(', ')
+                : 'No repetitions'
+              }
+            </div>
+            <div className="svz-metric-level" style={{ color: repetition_data && repetition_data.percentage > 15 ? '#ef4444' : repetition_data && repetition_data.percentage > 8 ? '#f59e0b' : '#10b981' }}>
+              {repetition_data && repetition_data.percentage > 15 ? 'High Repetition' : repetition_data && repetition_data.percentage > 8 ? 'Moderate' : 'Good Variety'}
             </div>
           </div>
         </div>

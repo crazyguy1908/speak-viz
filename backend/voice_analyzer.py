@@ -83,6 +83,70 @@ class VoiceAnalyzer:
             return result
         return []
 
+    def detect_filler_words(self, words, transcript):
+        """Detect common filler words in the transcript."""
+        filler_words = {
+            'um', 'uh', 'er', 'ah', 'hmm', 'huh', 'like', 'you know', 'basically', 
+            'actually', 'literally', 'sort of', 'kind of', 'right', 'okay', 'so',
+            'well', 'i mean', 'you see', 'i guess', 'i think', 'i suppose',
+            'i believe', 'i feel', 'i would say', 'i would think'
+        }
+        
+        # Convert transcript to lowercase for matching
+        transcript_lower = transcript.lower()
+        found_fillers = []
+        
+        # Check for single-word fillers
+        for word in words:
+            word_text = word['word'].lower().strip('.,!?;:')
+            if word_text in filler_words:
+                found_fillers.append(word_text)
+        
+        # Check for multi-word fillers
+        for filler in filler_words:
+            if ' ' in filler and filler in transcript_lower:
+                # Count occurrences of multi-word fillers
+                count = transcript_lower.count(filler)
+                found_fillers.extend([filler] * count)
+        
+        print(f"Found {len(found_fillers)} filler words: {found_fillers}")
+        return found_fillers
+
+    def detect_repetitions(self, words, transcript):
+        """Detect repeated words and phrases in the transcript."""
+        # Extract word list from words with timing
+        word_list = [word['word'].lower().strip('.,!?;:') for word in words]
+        
+        # Filter out very short words and common words
+        common_words = {'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'is', 'are', 'was', 'were', 'be', 'been', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could', 'should', 'may', 'might', 'can', 'this', 'that', 'these', 'those', 'i', 'you', 'he', 'she', 'it', 'we', 'they', 'me', 'him', 'her', 'us', 'them', 'my', 'your', 'his', 'her', 'its', 'our', 'their'}
+        
+        # Count word frequencies
+        word_counts = {}
+        for word in word_list:
+            if len(word) > 2 and word not in common_words:
+                word_counts[word] = word_counts.get(word, 0) + 1
+        
+        # Find repeated words (appearing more than once)
+        repeated_words = {word: count for word, count in word_counts.items() if count > 1}
+        
+        # Calculate repetition percentage
+        total_words = len(word_list)
+        repeated_word_count = sum(repeated_words.values()) - len(repeated_words)  # Subtract one occurrence of each word
+        repetition_percentage = (repeated_word_count / total_words * 100) if total_words > 0 else 0
+        
+        # Find most repeated words
+        top_repetitions = sorted(repeated_words.items(), key=lambda x: x[1], reverse=True)[:5]
+        
+        print(f"Repetition percentage: {repetition_percentage:.1f}%")
+        print(f"Top repeated words: {top_repetitions}")
+        
+        return {
+            'percentage': repetition_percentage,
+            'repeated_words': repeated_words,
+            'top_repetitions': top_repetitions,
+            'total_repeated_instances': repeated_word_count
+        }
+
     def _cleanup_files(self, *files):
         """Clean up temporary and processed audio files."""
         for file in files:
@@ -188,7 +252,10 @@ class VoiceAnalyzer:
                 for emo, p in emotion_scores.items():
                     print(f"  {emo}: {p:.3f}")
                 return {"label": top_label, "scores": emotion_scores}
-            emphasized_words = self.detect_emphasized_words(audio_file, None, words, transcript) 
+            emphasized_words = self.detect_emphasized_words(audio_file, None, words, transcript)
+            filler_words = self.detect_filler_words(words, transcript)
+            repetition_data = self.detect_repetitions(words, transcript)
+            
             analysis = {
                 'transcription': transcript,
                 'speed_wpm': speed_wpm,
@@ -196,7 +263,9 @@ class VoiceAnalyzer:
                 'tone_score': detect_emotion(),
                 'loudness': volume_calcuation(y, sr),
                 'pitch_stats': pitch_stats,
-                'emphasized_words': emphasized_words
+                'emphasized_words': emphasized_words,
+                'filler_words': filler_words,
+                'repetition_data': repetition_data
             }
             return analysis
             
