@@ -444,7 +444,7 @@ export default function FaceMetricVisualizations({ metrics, speechData, isStoppe
         {metrics.current.yawHistory &&
           metrics.current.yawHistory.length > 0 && (
             <div className="svz-recorder-figs-chart">
-              {selectedChart === "line" ? (
+              {selectedChart === "line" && (
                 <Line
                   ref={lineChartRef}
                   data={{
@@ -578,7 +578,8 @@ export default function FaceMetricVisualizations({ metrics, speechData, isStoppe
                     },
                   }}
                 />
-              ) : selectedChart === "scatter" ? (
+              )}
+              {selectedChart === "scatter" && (
                 <Scatter
                   ref={scatterChartRef}
                   data={{
@@ -713,7 +714,8 @@ export default function FaceMetricVisualizations({ metrics, speechData, isStoppe
                     },
                   }}
                 />
-              ) : (
+              )}
+              {selectedChart === "doughnut" && (
                 <Doughnut
                   data={{
                     labels: ["Good Eye Contact", "Poor Eye Contact"],
@@ -765,7 +767,8 @@ export default function FaceMetricVisualizations({ metrics, speechData, isStoppe
                     },
                   }}
                 />
-              ) : selectedChart === "speech" && speechData && speechData.wpm_history && speechData.wpm_history.length > 0 ? (
+              )}
+              {selectedChart === "speech" && speechData && speechData.wpm_history && speechData.wpm_history.length > 0 && (
                 <Line
                   data={{
                     labels: speechData.wpm_history.map((_, index) => index),
@@ -912,13 +915,12 @@ export default function FaceMetricVisualizations({ metrics, speechData, isStoppe
                     },
                   }}
                 />
-              ) : (
+              )}
+              {selectedChart === "speech" && (!speechData || !speechData.wpm_history || speechData.wpm_history.length === 0) && (
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#6b7280' }}>
-                  {selectedChart === "speech" ? "No speech data available" : "No data available"}
+                  No speech data available
                 </div>
               )}
-            </div>
-          )}
 
         <div className="stats-summary">
           <div className="stat-item">
