@@ -10,10 +10,6 @@ import pyloudnorm as pyln
 from transformers import AutoFeatureExtractor, AutoModelForAudioClassification
 import torch
 import torchaudio
-import re
-import string
-
-
 class VoiceAnalyzer:
     def __init__(self, sample_rate=16000, channels=1):
         self.sample_rate = sample_rate
@@ -87,6 +83,8 @@ class VoiceAnalyzer:
             return result
         return []
 
+<<<<<<< HEAD
+=======
     def detect_filler_words(self, words, transcript):
         """Detect common filler words in the transcript."""
         filler_words = {
@@ -121,47 +119,35 @@ class VoiceAnalyzer:
         if not words or len(words) < 2:
             return [], []
         
-        # Create segments of 3-5 words each
-        segment_size = min(4, max(2, len(words) // 10))  # Adaptive segment size
-        segments = []
+        # Filter out very short words and common words
+        common_words = {'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'is', 'are', 'was', 'were', 'be', 'been', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could', 'should', 'may', 'might', 'can', 'this', 'that', 'these', 'those', 'i', 'you', 'he', 'she', 'it', 'we', 'they', 'me', 'him', 'her', 'us', 'them', 'my', 'your', 'his', 'her', 'its', 'our', 'their'}
         
-        for i in range(0, len(words), segment_size):
-            segment_words = words[i:i + segment_size]
-            if len(segment_words) < 2:
-                continue
-                
-            start_time = segment_words[0]['start']
-            end_time = segment_words[-1]['end']
-            duration = end_time - start_time
-            
-            # Calculate WPM for this segment
-            word_count = len(segment_words)
-            wpm = (word_count / duration) * 60 if duration > 0 else 0
-            
-            # Calculate average loudness for this segment
-            start_frame = int(start_time * sr_lld)
-            end_frame = int(end_time * sr_lld)
-            
-            if start_frame < len(lld_df) and end_frame < len(lld_df):
-                segment_loudness = lld_df['Loudness_sma3'].iloc[start_frame:end_frame].mean()
-            else:
-                segment_loudness = -50  # Default quiet value
-            
-            segments.append({
-                'start_time': start_time,
-                'end_time': end_time,
-                'wpm': wpm,
-                'loudness': segment_loudness,
-                'words': [w['word'] for w in segment_words]
-            })
+        # Count word frequencies
+        word_counts = {}
+        for word in word_list:
+            if len(word) > 2 and word not in common_words:
+                word_counts[word] = word_counts.get(word, 0) + 1
         
-        # Extract time series data
-        wpm_history = [seg['wpm'] for seg in segments]
-        loudness_history = [seg['loudness'] for seg in segments]
+        # Find repeated words (appearing more than once)
+        repeated_words = {word: count for word, count in word_counts.items() if count > 1}
         
-        print(f"Generated {len(segments)} speech segments")
-        return wpm_history, loudness_history
-
+        # Calculate repetition percentage
+        total_words = len(word_list)
+        repeated_word_count = sum(repeated_words.values()) - len(repeated_words)  # Subtract one occurrence of each word
+        repetition_percentage = (repeated_word_count / total_words * 100) if total_words > 0 else 0
+        
+        # Find most repeated words
+        top_repetitions = sorted(repeated_words.items(), key=lambda x: x[1], reverse=True)[:5]
+        
+        print(f"Repetition percentage: {repetition_percentage:.1f}%")
+        print(f"Top repeated words: {top_repetitions}")
+        
+        return {
+            'percentage': repetition_percentage,
+            'repeated_words': repeated_words,
+            'top_repetitions': top_repetitions,
+            'total_repeated_instances': repeated_word_count
+        }
 
     def _cleanup_files(self, *files):
         """Clean up temporary and processed audio files."""
@@ -268,10 +254,14 @@ class VoiceAnalyzer:
                 for emo, p in emotion_scores.items():
                     print(f"  {emo}: {p:.3f}")
                 return {"label": top_label, "scores": emotion_scores}
+<<<<<<< HEAD
+            emphasized_words = self.detect_emphasized_words(audio_file, None, words, transcript) 
+=======
             emphasized_words = self.detect_emphasized_words(audio_file, None, words, transcript)
             filler_words = self.detect_filler_words(words, transcript)
             wpm_history, loudness_history = self.generate_speech_segments(words, lld_df)
             
+>>>>>>> befd3cf8a399f4375242661c9abffe4424c087aa
             analysis = {
                 'transcription': transcript,
                 'speed_wpm': speed_wpm,
@@ -279,10 +269,12 @@ class VoiceAnalyzer:
                 'tone_score': detect_emotion(),
                 'loudness': volume_calcuation(y, sr),
                 'pitch_stats': pitch_stats,
+<<<<<<< HEAD
+                'emphasized_words': emphasized_words
+=======
                 'emphasized_words': emphasized_words,
                 'filler_words': filler_words,
-                'wpm_history': wpm_history,
-                'loudness_history': loudness_history
+                'repetition_data': repetition_data
             }
             return analysis
             
@@ -337,12 +329,12 @@ class VoiceAnalyzer:
 
         context_addition = context_prompts.get(context, context_prompts["general"])
         analysis_json = analysis
-        api_key = "AIzaSyA4j6MyrkAuGqf8cf0dbNnfXYgz75GDq1g"
+        api_key = os.getenv("GEMINI_API_KEY")
         if not api_key:
             return "Gemini recommendations unavailable (API key missing)."
 
         try:
-            genai.configure(api_key="AIzaSyA4j6MyrkAuGqf8cf0dbNnfXYgz75GDq1g")
+            genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
             model = genai.GenerativeModel('gemini-2.5-flash')
 
             prompt = (

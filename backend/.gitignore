@@ -15,7 +15,7 @@
 *.rar
 *.tar
 *.zip
-
+*.env
 
 *.log
 *.sql

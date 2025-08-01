@@ -16,8 +16,6 @@ export default function MyVideosPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const router = useRouter();
 
-
-
   const fetchUserVideos = async () => {
     setLoading(true);
     setError(null);
@@ -54,9 +52,7 @@ export default function MyVideosPage() {
         if (urlError) {
           console.warn("Could not get signed URL for", row.file_path, urlError);
         }
-        
 
-        
         return {
           ...row,
           url: data?.signedUrl || null,
@@ -83,35 +79,36 @@ export default function MyVideosPage() {
   };
 
   const handleDeleteVideo = async (videoId, filePath) => {
-    if (!confirm('Are you sure you want to delete this recording? This action cannot be undone.')) {
+    if (
+      !confirm(
+        "Are you sure you want to delete this recording? This action cannot be undone."
+      )
+    ) {
       return;
     }
 
     try {
-      // Delete from storage
       const { error: storageError } = await supabase.storage
-        .from('videos')
+        .from("videos")
         .remove([filePath]);
 
       if (storageError) {
-        console.error('Error deleting from storage:', storageError);
+        console.error("Error deleting from storage:", storageError);
       }
 
-      // Delete from database
       const { error: dbError } = await supabase
-        .from('videos')
+        .from("videos")
         .delete()
-        .eq('id', videoId);
+        .eq("id", videoId);
 
       if (dbError) {
-        console.error('Error deleting from database:', dbError);
+        console.error("Error deleting from database:", dbError);
         return;
       }
 
-      // Refresh the videos list
       fetchUserVideos();
     } catch (error) {
-      console.error('Error deleting video:', error);
+      console.error("Error deleting video:", error);
     }
   };
 
@@ -132,7 +129,7 @@ export default function MyVideosPage() {
         <p className="svz-playback-msg svz-playback-msg-empty">
           Use the + button to start your first recording.
         </p>
-        
+
         {/* Floating Action Button */}
         <button
           onClick={() => router.push("/recorder")}
@@ -175,7 +172,7 @@ export default function MyVideosPage() {
                 </p>
               </div>
               <div className="svz-playback-actions">
-                <Button 
+                <Button
                   onClick={() => handleVideoClick(vid)}
                   className="svz-playback-analysis-btn"
                 >
@@ -188,7 +185,7 @@ export default function MyVideosPage() {
                     </a>
                   </Button>
                 )}
-                <Button 
+                <Button
                   onClick={() => handleDeleteVideo(vid.id, vid.file_path)}
                   className="svz-playback-delete-btn"
                 >
@@ -199,14 +196,13 @@ export default function MyVideosPage() {
           </Card>
         ))}
       </div>
-      
-      <FeedbackModal 
+
+      <FeedbackModal
         isOpen={isModalOpen}
         onClose={closeModal}
         videoData={selectedVideo}
       />
-      
-      {/* Floating Action Button */}
+
       <button
         onClick={() => router.push("/recorder")}
         className="svz-playback-fab"

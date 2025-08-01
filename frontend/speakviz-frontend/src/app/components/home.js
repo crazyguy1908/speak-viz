@@ -29,7 +29,9 @@ export default function SpeakVizLanding() {
       setLoading(false);
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
     });
 
@@ -38,7 +40,6 @@ export default function SpeakVizLanding() {
 
   return (
     <div className="svz-home-root">
-      {/* Header with Login/Signup or My Recordings */}
       <header className="svz-home-header">
         <div className="svz-home-header-left">
           <div className="svz-home-logo">
@@ -47,8 +48,8 @@ export default function SpeakVizLanding() {
           <span className="svz-home-title">SpeakViz</span>
         </div>
         <div className="svz-home-header-right">
-          {!loading && (
-            session ? (
+          {!loading &&
+            (session ? (
               <Button
                 className="svz-home-signup-btn"
                 onClick={() => router.push("/recordings")}
@@ -71,12 +72,10 @@ export default function SpeakVizLanding() {
                   Sign Up Free
                 </Button>
               </>
-            )
-          )}
+            ))}
         </div>
       </header>
 
-      {/* Hero Section */}
       <section className="svz-home-hero">
         <Badge className="svz-home-hero-badge">
           🎯 Advanced Speech Analytics for Everyone
@@ -97,8 +96,8 @@ export default function SpeakVizLanding() {
         </p>
 
         <div className="svz-home-hero-cta">
-          {!loading && (
-            session ? (
+          {!loading &&
+            (session ? (
               <>
                 <Button
                   size="lg"
@@ -138,11 +137,9 @@ export default function SpeakVizLanding() {
                   View Demo
                 </Button>
               </>
-            )
-          )}
+            ))}
         </div>
 
-        {/* Hero Image */}
         <div className="svz-home-hero-img-wrap">
           <div className="svz-home-hero-img-border">
             <div className="svz-home-hero-img-inner">
@@ -158,7 +155,6 @@ export default function SpeakVizLanding() {
         </div>
       </section>
 
-      {/* Features Section */}
       <section className="svz-home-features">
         <div className="svz-home-features-header">
           <h2 className="svz-home-features-title">
@@ -215,7 +211,6 @@ export default function SpeakVizLanding() {
         </div>
       </section>
 
-      {/* Benefits Section */}
       <section className="svz-home-benefits">
         <div className="svz-home-benefits-inner">
           <div className="svz-home-benefits-content">
@@ -258,7 +253,9 @@ export default function SpeakVizLanding() {
               <Button
                 size="lg"
                 className="svz-home-benefits-cta"
-                onClick={() => session ? router.push("/recorder") : router.push("/signin")}
+                onClick={() =>
+                  session ? router.push("/recorder") : router.push("/signin")
+                }
               >
                 {session ? "Start Recording" : "Get Started Today"}
                 <ArrowRight className="svz-home-benefits-cta-icon" />
@@ -278,7 +275,6 @@ export default function SpeakVizLanding() {
         </div>
       </section>
 
-      {/* Features Grid Section (Replacing Testimonials) */}
       <section className="svz-home-features-grid">
         <div className="svz-home-features-grid-header">
           <h2 className="svz-home-features-grid-title">
@@ -375,7 +371,6 @@ export default function SpeakVizLanding() {
         </div>
       </section>
 
-      {/* CTA Section */}
       <section className="svz-home-cta">
         <div className="svz-home-cta-inner">
           <div className="svz-home-cta-content">
