@@ -5,7 +5,6 @@ import dynamic from "next/dynamic";
 import { supabase } from "../../supabaseClient";
 import Navbar from "../components/navbar";
 
-// Dynamically import Recorder component with no SSR
 const Recorder = dynamic(() => import("../components/recorder"), {
   ssr: false,
   loading: () => <div className="text-center">Loading recorder...</div>,

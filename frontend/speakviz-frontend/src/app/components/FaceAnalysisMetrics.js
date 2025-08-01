@@ -69,7 +69,6 @@ export function updateOrientationMetrics(
   segment.totalFrames++;
   if (isEyeContact) segment.eyeContactFrames++;
 
-  // Fixed segmentation logic
   if (segment.totalFrames >= 30) {
     const eyeContactRatio = segment.eyeContactFrames / segment.totalFrames;
     m.eyeContactSegments.push({
@@ -103,7 +102,6 @@ export function analyzeHeadOrientationSpread(metrics) {
     m.yawHistory.length;
   const yawSpread = Math.sqrt(yawVariance);
 
-  // Calculating pitch spread
   const pitchMean =
     m.pitchHistory.reduce((a, b) => a + b, 0) / m.pitchHistory.length;
   const pitchVariance =
@@ -246,25 +244,24 @@ export function finalizeCurrentSegment(metrics) {
 
   const eyeContactRatio = seg.eyeContactFrames / seg.totalFrames;
 
-  // Fixed: Ensure proper end frame calculation
   m.eyeContactSegments.push({
     start: seg.start,
-    end: seg.start + seg.totalFrames - 1, // Fixed: end should be start + duration - 1
+    end: seg.start + seg.totalFrames - 1, 
     duration: seg.totalFrames,
     eyeContactFrames: seg.eyeContactFrames,
     eyeContactRatio,
     isGoodSegment: eyeContactRatio >= 0.6,
   });
 
-  // Reset current segment
+
   m.currentSegment = {
-    start: seg.start + seg.totalFrames, // Start from next frame
+    start: seg.start + seg.totalFrames, 
     eyeContactFrames: 0,
     totalFrames: 0,
   };
 }
 
-// Helper function to classify individual segments
+// classify individual segments
 function classifySegment(segment, yawSpread, pitchSpread) {
   const HIGH_YAW_THRESHOLD = 0.15;
   const HIGH_PITCH_THRESHOLD = 0.08;
@@ -382,10 +379,8 @@ export default function FaceMetricVisualizations({ metrics }) {
     return obj;
   }, {});
 
-  // Calculate proper x-axis range
   const maxFrame = Math.max(metrics.current.yawHistory.length - 1, 0);
 
-  // Reduce tick density for cleaner appearance
   const getTickStepSize = (maxFrame) => {
     if (maxFrame < 100) return 10;
     if (maxFrame < 500) return 50;

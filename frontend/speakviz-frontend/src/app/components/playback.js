@@ -1,4 +1,3 @@
-// pages/my-videos.js
 import { useEffect, useState } from "react";
 import { supabase } from "../../supabaseClient";
 import { Card, CardContent } from "@/components/ui/card";
@@ -130,7 +129,6 @@ export default function MyVideosPage() {
           Use the + button to start your first recording.
         </p>
 
-        {/* Floating Action Button */}
         <button
           onClick={() => router.push("/recorder")}
           className="svz-playback-fab"

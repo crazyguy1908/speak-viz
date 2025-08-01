@@ -14,7 +14,6 @@ export default function SpeechMetrics({ speechData, isStopped = false }) {
     filler_words,
   } = speechData;
 
-  // Calculate pause statistics
   const totalPauses = pause_durations_s ? pause_durations_s.length : 0;
   const averagePauseDuration =
     pause_durations_s && pause_durations_s.length > 0
@@ -131,7 +130,6 @@ export default function SpeechMetrics({ speechData, isStopped = false }) {
         </div>
 
 
-        {/* Emotion Card */}
         <div className="svz-metric-card">
           <div
             className="svz-metric-icon"

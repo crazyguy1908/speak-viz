@@ -47,7 +47,6 @@ export default function FeedbackModal({ isOpen, onClose, videoData }) {
         points = [];
     }
 
-    // Convert string arrays to object arrays if needed
     if (points.length > 0 && typeof points[0] === "string") {
       console.log(
         `Converting string array to object array for ${selectedSection}:`,
