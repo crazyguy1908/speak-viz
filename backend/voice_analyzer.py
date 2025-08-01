@@ -114,6 +114,52 @@ class VoiceAnalyzer:
         print(f"Found {len(found_fillers)} filler words: {found_fillers}")
         return found_fillers
 
+    def generate_speech_segments(self, words, lld_df, sr_lld=100):
+        """Generate time-series data for WPM and Loudness in segments."""
+        if not words or len(words) < 2:
+            return [], []
+        
+        # Create segments of 3-5 words each
+        segment_size = min(4, max(2, len(words) // 10))  # Adaptive segment size
+        segments = []
+        
+        for i in range(0, len(words), segment_size):
+            segment_words = words[i:i + segment_size]
+            if len(segment_words) < 2:
+                continue
+                
+            start_time = segment_words[0]['start']
+            end_time = segment_words[-1]['end']
+            duration = end_time - start_time
+            
+            # Calculate WPM for this segment
+            word_count = len(segment_words)
+            wpm = (word_count / duration) * 60 if duration > 0 else 0
+            
+            # Calculate average loudness for this segment
+            start_frame = int(start_time * sr_lld)
+            end_frame = int(end_time * sr_lld)
+            
+            if start_frame < len(lld_df) and end_frame < len(lld_df):
+                segment_loudness = lld_df['Loudness_sma3'].iloc[start_frame:end_frame].mean()
+            else:
+                segment_loudness = -50  # Default quiet value
+            
+            segments.append({
+                'start_time': start_time,
+                'end_time': end_time,
+                'wpm': wpm,
+                'loudness': segment_loudness,
+                'words': [w['word'] for w in segment_words]
+            })
+        
+        # Extract time series data
+        wpm_history = [seg['wpm'] for seg in segments]
+        loudness_history = [seg['loudness'] for seg in segments]
+        
+        print(f"Generated {len(segments)} speech segments")
+        return wpm_history, loudness_history
+
 
     def _cleanup_files(self, *files):
         """Clean up temporary and processed audio files."""
