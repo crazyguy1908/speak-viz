@@ -392,639 +392,641 @@ export default function FaceMetricVisualizations({ metrics, speechData, isStoppe
   };
 
   return (
-    <>
-      <div className="svz-recorder-figs-container">
-        <div className="section-header">
-          <p className="svz-recorder-figs-title">
-            Head Movement & Eye Contact Analysis
-          </p>
-          <div className="controls-row">
-            <div className="chart-selector">
-              <button
-                className={`selector-btn ${
-                  selectedChart === "line" ? "active" : ""
-                }`}
-                onClick={() => setSelectedChart("line")}
-              >
-                📈 Time Series
-              </button>
-              <button
-                className={`selector-btn ${
-                  selectedChart === "scatter" ? "active" : ""
-                }`}
-                onClick={() => setSelectedChart("scatter")}
-              >
-                📊 Distribution
-              </button>
-              <button
-                className={`selector-btn ${
-                  selectedChart === "doughnut" ? "active" : ""
-                }`}
-                onClick={() => setSelectedChart("doughnut")}
-              >
-                🍩 Eye Contact
-              </button>
-              <button
-                className={`selector-btn ${
-                  selectedChart === "speech" ? "active" : ""
-                }`}
-                onClick={() => setSelectedChart("speech")}
-              >
-                🎤 Speech Analysis
-              </button>
-            </div>
-            {(selectedChart === "line" || selectedChart === "scatter" || selectedChart === "speech") && (
-              <button className="reset-btn" onClick={resetZoom}>
-                🔄 Reset Zoom
-              </button>
-            )}
+  <>
+    <div className="svz-recorder-figs-container">
+      <div className="section-header">
+        <p className="svz-recorder-figs-title">
+          Head Movement & Eye Contact Analysis
+        </p>
+        <div className="controls-row">
+          <div className="chart-selector">
+            <button
+              className={`selector-btn ${
+                selectedChart === "line" ? "active" : ""
+              }`}
+              onClick={() => setSelectedChart("line")}
+            >
+              📈 Time Series
+            </button>
+            <button
+              className={`selector-btn ${
+                selectedChart === "scatter" ? "active" : ""
+              }`}
+              onClick={() => setSelectedChart("scatter")}
+            >
+              📊 Distribution
+            </button>
+            <button
+              className={`selector-btn ${
+                selectedChart === "doughnut" ? "active" : ""
+              }`}
+              onClick={() => setSelectedChart("doughnut")}
+            >
+              🍩 Eye Contact
+            </button>
+            <button
+              className={`selector-btn ${
+                selectedChart === "speech" ? "active" : ""
+              }`}
+              onClick={() => setSelectedChart("speech")}
+            >
+              🎤 Speech Analysis
+            </button>
           </div>
-        </div>
-
-        {metrics.current.yawHistory &&
-          metrics.current.yawHistory.length > 0 && (
-            <div className="svz-recorder-figs-chart">
-              {selectedChart === "line" && (
-                <Line
-                  ref={lineChartRef}
-                  data={{
-                    labels: metrics.current.yawHistory.map((_, index) => index),
-                    datasets: [
-                      {
-                        label: "Yaw (Left/Right)",
-                        data: metrics.current.yawHistory,
-                        borderColor: "#06b6d4",
-                        backgroundColor: "rgba(6, 182, 212, 0.1)",
-                        borderWidth: 2,
-                        pointRadius: 1,
-                        pointHoverRadius: 4,
-                        tension: 0.2,
-                      },
-                      {
-                        label: "Pitch (Up/Down)",
-                        data: metrics.current.pitchHistory,
-                        borderColor: "#f59e0b",
-                        backgroundColor: "rgba(245, 158, 11, 0.1)",
-                        borderWidth: 2,
-                        pointRadius: 1,
-                        pointHoverRadius: 4,
-                        tension: 0.2,
-                      },
-                    ],
-                  }}
-                  options={{
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    animation: true,
-                    plugins: {
-                      zoom: {
-                        zoom: {
-                          wheel: { enabled: true },
-                          pinch: { enabled: true },
-                          mode: "x",
-                        },
-                        pan: {
-                          enabled: true,
-                          mode: "x",
-                        },
-                        limits: {
-                          x: {
-                            min: 0,
-                            max: metrics.current.yawHistory.length - 1,
-                          },
-                          y: { min: -1, max: 1 },
-                        },
-                      },
-                      annotation: {
-                        annotations: segmentAnnotations,
-                      },
-                      legend: {
-                        position: "top",
-                        labels: {
-                          font: {
-                            size: 12,
-                            family: "Inter, system-ui, sans-serif",
-                          },
-                          padding: 20,
-                          usePointStyle: true,
-                          pointStyle: "line",
-                        },
-                      },
-                      title: {
-                        display: true,
-                        text: "Head Movement Over Time",
-                        font: {
-                          size: 16,
-                          weight: "bold",
-                          family: "Inter, system-ui, sans-serif",
-                        },
-                        padding: {
-                          top: 10,
-                          bottom: 20,
-                        },
-                      },
-                    },
-                    scales: {
-                      y: {
-                        beginAtZero: false,
-                        min: -1,
-                        max: 1,
-                        title: {
-                          display: true,
-                          text: "Angle (normalized)",
-                          font: {
-                            size: 12,
-                            family: "Inter, system-ui, sans-serif",
-                          },
-                        },
-                        grid: {
-                          color: "rgba(0, 0, 0, 0.05)",
-                          lineWidth: 1,
-                        },
-                        ticks: {
-                          stepSize: 0.5,
-                          font: {
-                            size: 11,
-                          },
-                        },
-                      },
-                      x: {
-                        min: 0,
-                        max: maxFrame,
-                        title: {
-                          display: true,
-                          text: "Frame Number",
-                          font: {
-                            size: 12,
-                            family: "Inter, system-ui, sans-serif",
-                          },
-                        },
-                        grid: {
-                          color: "rgba(0, 0, 0, 0.05)",
-                          lineWidth: 1,
-                        },
-                        ticks: {
-                          stepSize: getTickStepSize(maxFrame),
-                          maxTicksLimit: 10,
-                          font: {
-                            size: 11,
-                          },
-                        },
-                      },
-                    },
-                    interaction: {
-                      intersect: true,
-                      mode: "nearest",
-                    },
-                  }}
-                />
-              )}
-              {selectedChart === "scatter" && (
-                <Scatter
-                  ref={scatterChartRef}
-                  data={{
-                    datasets: [
-                      {
-                        label: "Head Position Distribution",
-                        data: metrics.current.yawHistory.map((yaw, i) => ({
-                          x: yaw,
-                          y: metrics.current.pitchHistory[i],
-                        })),
-                        pointBackgroundColor: "#06b6d4",
-                        pointBorderColor: "#0891b2",
-                        pointBorderWidth: 1,
-                        pointRadius: 3,
-                        pointHoverRadius: 5,
-                      },
-                    ],
-                  }}
-                  options={{
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    animation: false,
-                    plugins: {
-                      zoom: {
-                        zoom: {
-                          wheel: { enabled: true },
-                          pinch: { enabled: true },
-                        },
-                        pan: {
-                          enabled: true,
-                        },
-                      },
-                      legend: {
-                        position: "top",
-                        labels: {
-                          font: {
-                            size: 12,
-                            family: "Inter, system-ui, sans-serif",
-                          },
-                          padding: 20,
-                          usePointStyle: true,
-                        },
-                      },
-                      title: {
-                        display: true,
-                        text: "Head Position Distribution",
-                        font: {
-                          size: 16,
-                          weight: "bold",
-                          family: "Inter, system-ui, sans-serif",
-                        },
-                        padding: {
-                          top: 10,
-                          bottom: 20,
-                        },
-                      },
-                      annotation: {
-                        annotations: {
-                          ellipse: {
-                            type: "ellipse",
-                            xMin: yawMean - yawSpread,
-                            xMax: yawMean + yawSpread,
-                            yMin: pitchMean - pitchSpread,
-                            yMax: pitchMean + pitchSpread,
-                            backgroundColor: "rgba(6, 182, 212, 0.08)",
-                            borderColor: "rgba(6, 182, 212, 0.4)",
-                            borderWidth: 2,
-                            borderDash: [8, 4],
-                          },
-                          centerPoint: {
-                            type: "point",
-                            xValue: yawMean,
-                            yValue: pitchMean,
-                            backgroundColor: "#dc2626",
-                            borderColor: "#fef2f2",
-                            borderWidth: 2,
-                            radius: 5,
-                          },
-                        },
-                      },
-                    },
-                    scales: {
-                      y: {
-                        beginAtZero: false,
-                        min: -1,
-                        max: 1,
-                        title: {
-                          display: true,
-                          text: "Pitch (Up/Down)",
-                          font: {
-                            size: 12,
-                            family: "Inter, system-ui, sans-serif",
-                          },
-                        },
-                        grid: {
-                          color: "rgba(0, 0, 0, 0.05)",
-                          lineWidth: 1,
-                        },
-                        ticks: {
-                          stepSize: 0.5,
-                          font: {
-                            size: 11,
-                          },
-                        },
-                      },
-                      x: {
-                        min: -1,
-                        max: 1,
-                        title: {
-                          display: true,
-                          text: "Yaw (Left/Right)",
-                          font: {
-                            size: 12,
-                            family: "Inter, system-ui, sans-serif",
-                          },
-                        },
-                        grid: {
-                          color: "rgba(0, 0, 0, 0.05)",
-                          lineWidth: 1,
-                        },
-                        ticks: {
-                          stepSize: 0.5,
-                          font: {
-                            size: 11,
-                          },
-                        },
-                      },
-                    },
-                    interaction: {
-                      intersect: true,
-                      mode: "nearest",
-                    },
-                  }}
-                />
-              )}
-              {selectedChart === "doughnut" && (
-                <Doughnut
-                  data={{
-                    labels: ["Good Eye Contact", "Poor Eye Contact"],
-                    datasets: [
-                      {
-                        data: [
-                          eyeContactFrames,
-                          totalFrames - eyeContactFrames,
-                        ],
-                        backgroundColor: ["#10b981", "#ef4444"],
-                        borderColor: ["#059669", "#dc2626"],
-                        borderWidth: 3,
-                        hoverOffset: 8,
-                      },
-                    ],
-                  }}
-                  options={{
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                      legend: {
-                        position: "bottom",
-                        labels: {
-                          font: {
-                            size: 13,
-                            family: "Inter, system-ui, sans-serif",
-                          },
-                          padding: 25,
-                          usePointStyle: true,
-                          pointStyle: "circle",
-                        },
-                      },
-                      title: {
-                        display: true,
-                        text: `Overall Eye Contact: ${(
-                          (eyeContactFrames / totalFrames) *
-                          100
-                        ).toFixed(1)}%`,
-                        font: {
-                          size: 18,
-                          weight: "bold",
-                          family: "Inter, system-ui, sans-serif",
-                        },
-                        padding: {
-                          top: 10,
-                          bottom: 30,
-                        },
-                      },
-                    },
-                  }}
-                />
-              )}
-              {selectedChart === "speech" && speechData && speechData.wpm_history && speechData.wpm_history.length > 0 && (
-                <Line
-                  data={{
-                    labels: speechData.wpm_history.map((_, index) => index),
-                    datasets: [
-                      {
-                        label: "Words Per Minute",
-                        data: speechData.wpm_history,
-                        borderColor: "#06b6d4",
-                        backgroundColor: "rgba(6, 182, 212, 0.1)",
-                        borderWidth: 2,
-                        pointRadius: 2,
-                        pointHoverRadius: 5,
-                        tension: 0.2,
-                        yAxisID: 'y',
-                      },
-                      {
-                        label: "Loudness (LUFS)",
-                        data: speechData.loudness_history,
-                        borderColor: "#f59e0b",
-                        backgroundColor: "rgba(245, 158, 11, 0.1)",
-                        borderWidth: 2,
-                        pointRadius: 2,
-                        pointHoverRadius: 5,
-                        tension: 0.2,
-                        yAxisID: 'y1',
-                      },
-                    ],
-                  }}
-                  options={{
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    animation: true,
-                    plugins: {
-                      zoom: {
-                        zoom: {
-                          wheel: { enabled: true },
-                          pinch: { enabled: true },
-                          mode: "x",
-                        },
-                        pan: {
-                          enabled: true,
-                          mode: "x",
-                        },
-                        limits: {
-                          x: {
-                            min: 0,
-                            max: speechData.wpm_history.length - 1,
-                          },
-                        },
-                      },
-                      legend: {
-                        position: "top",
-                        labels: {
-                          font: {
-                            size: 12,
-                            family: "Inter, system-ui, sans-serif",
-                          },
-                          padding: 20,
-                          usePointStyle: true,
-                          pointStyle: "line",
-                        },
-                      },
-                      title: {
-                        display: true,
-                        text: "Speech Analysis Over Time",
-                        font: {
-                          size: 16,
-                          weight: "bold",
-                          family: "Inter, system-ui, sans-serif",
-                        },
-                        padding: {
-                          top: 10,
-                          bottom: 20,
-                        },
-                      },
-                    },
-                    scales: {
-                      y: {
-                        type: 'linear',
-                        display: true,
-                        position: 'left',
-                        title: {
-                          display: true,
-                          text: "Words Per Minute",
-                          font: {
-                            size: 12,
-                            family: "Inter, system-ui, sans-serif",
-                          },
-                        },
-                        grid: {
-                          color: "rgba(0, 0, 0, 0.05)",
-                          lineWidth: 1,
-                        },
-                        ticks: {
-                          font: {
-                            size: 11,
-                          },
-                        },
-                      },
-                      y1: {
-                        type: 'linear',
-                        display: true,
-                        position: 'right',
-                        title: {
-                          display: true,
-                          text: "Loudness (LUFS)",
-                          font: {
-                            size: 12,
-                            family: "Inter, system-ui, sans-serif",
-                          },
-                        },
-                        grid: {
-                          drawOnChartArea: false,
-                        },
-                        ticks: {
-                          font: {
-                            size: 11,
-                          },
-                        },
-                      },
-                      x: {
-                        title: {
-                          display: true,
-                          text: "Speech Segment",
-                          font: {
-                            size: 12,
-                            family: "Inter, system-ui, sans-serif",
-                          },
-                        },
-                        grid: {
-                          color: "rgba(0, 0, 0, 0.05)",
-                          lineWidth: 1,
-                        },
-                        ticks: {
-                          font: {
-                            size: 11,
-                          },
-                        },
-                      },
-                    },
-                    interaction: {
-                      intersect: true,
-                      mode: "nearest",
-                    },
-                  }}
-                />
-              )}
-              {selectedChart === "speech" && (!speechData || !speechData.wpm_history || speechData.wpm_history.length === 0) && (
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#6b7280' }}>
-                  No speech data available
-                </div>
-              )}
-
-        <div className="stats-summary">
-          <div className="stat-item">
-            <span className="stat-label">Yaw Spread</span>
-            <span className="stat-value">{yawSpread.toFixed(3)}</span>
-          </div>
-          <div className="stat-item">
-            <span className="stat-label">Pitch Spread</span>
-            <span className="stat-value">{pitchSpread.toFixed(3)}</span>
-          </div>
-          <div className="stat-item">
-            <span className="stat-label">Yaw Mean</span>
-            <span className="stat-value">{yawMean.toFixed(3)}</span>
-          </div>
-          <div className="stat-item">
-            <span className="stat-label">Pitch Mean</span>
-            <span className="stat-value">{pitchMean.toFixed(3)}</span>
-          </div>
-          <div className="stat-item">
-            <span className="stat-label">Total Segments</span>
-            <span className="stat-value">
-              {metrics.current.eyeContactSegments.length}
-            </span>
-          </div>
-        </div>
-
-        <div className="chart-guide">
-          {selectedChart === "line" && (
-            <div className="guide-content">
-              <p>
-                <strong>📈 Time Series:</strong> Shows head movement over time.
-                Hover over colored segments for details.{" "}
-                <strong>Green = Good eye contact (≥60%)</strong>,{" "}
-                <strong>Red = Poor eye contact (&lt;60%)</strong>.
-              </p>
-              <p>
-                <strong>Classifications:</strong>{" "}
-                <em>Deliberate Audience Engagement</em> (high movement + good
-                eye contact),
-                <em>Likely Distraction</em> (high movement + poor eye contact),
-                <em>Focused Direct Communication</em> (low movement + good eye
-                contact),
-                <em>Poor Engagement</em> (low movement + poor eye contact).
-              </p>
-              <p>
-                <strong>Controls:</strong> Mouse wheel to zoom horizontally,
-                click-drag to pan, "Reset Zoom" to return to full view.
-              </p>
-            </div>
-          )}
-
-          {selectedChart === "scatter" && (
-            <div className="guide-content">
-              <p>
-                <strong>📊 Distribution:</strong> Each dot shows your head
-                position at a moment in time. The{" "}
-                <strong>dashed ellipse</strong> shows your typical movement
-                range, <strong>red dot</strong> marks average position.
-              </p>
-              <p>
-                <strong>Interpretation:</strong> Tight cluster = consistent
-                positioning, wide spread = dynamic movement. Mouse wheel to
-                zoom, click-drag to pan.
-              </p>
-            </div>
-          )}
-
-          {selectedChart === "doughnut" && (
-            <div className="guide-content">
-              <p>
-                <strong>🍩 Eye Contact Summary:</strong> Overall performance as
-                percentage of total time.{" "}
-                <strong>Green = Good eye contact</strong>,{" "}
-                <strong>Red = Poor eye contact</strong>.
-              </p>
-              <p>
-                <strong>Benchmarks:</strong> 80%+ (Excellent), 60-79% (Good),
-                40-59% (Needs improvement), &lt;40% (Poor).{" "}
-                <strong>Tip:</strong> Look at camera lens, not screen.
-              </p>
-            </div>
-          )}
-
-          {selectedChart === "speech" && (
-            <div className="guide-content">
-              <p>
-                <strong>🎤 Speech Analysis:</strong> Shows WPM and Loudness over time.
-                <strong>Blue line = Words Per Minute</strong>,{" "}
-                <strong>Orange line = Loudness (LUFS)</strong>.
-              </p>
-              <p>
-                <strong>Pattern Analysis:</strong>{" "}
-                <em>High Volume + Low Speed</em> = Significant words/emphasis,{" "}
-                <em>Low Volume + High Speed</em> = Insignificant words/fillers,{" "}
-                <em>Both Low or Both High</em> = Poor practice, needs improvement.
-              </p>
-              <p>
-                <strong>Controls:</strong> Mouse wheel to zoom horizontally,
-                click-drag to pan, "Reset Zoom" to return to full view.
-              </p>
-            </div>
+          {(selectedChart === "line" || selectedChart === "scatter" || selectedChart === "speech") && (
+            <button className="reset-btn" onClick={resetZoom}>
+              🔄 Reset Zoom
+            </button>
           )}
         </div>
       </div>
-    </>
-  );
+
+      {metrics.current.yawHistory &&
+        metrics.current.yawHistory.length > 0 && (
+          <div className="svz-recorder-figs-chart">
+            {selectedChart === "line" && (
+              <Line
+                ref={lineChartRef}
+                data={{
+                  labels: metrics.current.yawHistory.map((_, index) => index),
+                  datasets: [
+                    {
+                      label: "Yaw (Left/Right)",
+                      data: metrics.current.yawHistory,
+                      borderColor: "#06b6d4",
+                      backgroundColor: "rgba(6, 182, 212, 0.1)",
+                      borderWidth: 2,
+                      pointRadius: 1,
+                      pointHoverRadius: 4,
+                      tension: 0.2,
+                    },
+                    {
+                      label: "Pitch (Up/Down)",
+                      data: metrics.current.pitchHistory,
+                      borderColor: "#f59e0b",
+                      backgroundColor: "rgba(245, 158, 11, 0.1)",
+                      borderWidth: 2,
+                      pointRadius: 1,
+                      pointHoverRadius: 4,
+                      tension: 0.2,
+                    },
+                  ],
+                }}
+                options={{
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  animation: true,
+                  plugins: {
+                    zoom: {
+                      zoom: {
+                        wheel: { enabled: true },
+                        pinch: { enabled: true },
+                        mode: "x",
+                      },
+                      pan: {
+                        enabled: true,
+                        mode: "x",
+                      },
+                      limits: {
+                        x: {
+                          min: 0,
+                          max: metrics.current.yawHistory.length - 1,
+                        },
+                        y: { min: -1, max: 1 },
+                      },
+                    },
+                    annotation: {
+                      annotations: segmentAnnotations,
+                    },
+                    legend: {
+                      position: "top",
+                      labels: {
+                        font: {
+                          size: 12,
+                          family: "Inter, system-ui, sans-serif",
+                        },
+                        padding: 20,
+                        usePointStyle: true,
+                        pointStyle: "line",
+                      },
+                    },
+                    title: {
+                      display: true,
+                      text: "Head Movement Over Time",
+                      font: {
+                        size: 16,
+                        weight: "bold",
+                        family: "Inter, system-ui, sans-serif",
+                      },
+                      padding: {
+                        top: 10,
+                        bottom: 20,
+                      },
+                    },
+                  },
+                  scales: {
+                    y: {
+                      beginAtZero: false,
+                      min: -1,
+                      max: 1,
+                      title: {
+                        display: true,
+                        text: "Angle (normalized)",
+                        font: {
+                          size: 12,
+                          family: "Inter, system-ui, sans-serif",
+                        },
+                      },
+                      grid: {
+                        color: "rgba(0, 0, 0, 0.05)",
+                        lineWidth: 1,
+                      },
+                      ticks: {
+                        stepSize: 0.5,
+                        font: {
+                          size: 11,
+                        },
+                      },
+                    },
+                    x: {
+                      min: 0,
+                      max: maxFrame,
+                      title: {
+                        display: true,
+                        text: "Frame Number",
+                        font: {
+                          size: 12,
+                          family: "Inter, system-ui, sans-serif",
+                        },
+                      },
+                      grid: {
+                        color: "rgba(0, 0, 0, 0.05)",
+                        lineWidth: 1,
+                      },
+                      ticks: {
+                        stepSize: getTickStepSize(maxFrame),
+                        maxTicksLimit: 10,
+                        font: {
+                          size: 11,
+                        },
+                      },
+                    },
+                  },
+                  interaction: {
+                    intersect: true,
+                    mode: "nearest",
+                  },
+                }}
+              />
+            )}
+            {selectedChart === "scatter" && (
+              <Scatter
+                ref={scatterChartRef}
+                data={{
+                  datasets: [
+                    {
+                      label: "Head Position Distribution",
+                      data: metrics.current.yawHistory.map((yaw, i) => ({
+                        x: yaw,
+                        y: metrics.current.pitchHistory[i],
+                      })),
+                      pointBackgroundColor: "#06b6d4",
+                      pointBorderColor: "#0891b2",
+                      pointBorderWidth: 1,
+                      pointRadius: 3,
+                      pointHoverRadius: 5,
+                    },
+                  ],
+                }}
+                options={{
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  animation: false,
+                  plugins: {
+                    zoom: {
+                      zoom: {
+                        wheel: { enabled: true },
+                        pinch: { enabled: true },
+                      },
+                      pan: {
+                        enabled: true,
+                      },
+                    },
+                    legend: {
+                      position: "top",
+                      labels: {
+                        font: {
+                          size: 12,
+                          family: "Inter, system-ui, sans-serif",
+                        },
+                        padding: 20,
+                        usePointStyle: true,
+                      },
+                    },
+                    title: {
+                      display: true,
+                      text: "Head Position Distribution",
+                      font: {
+                        size: 16,
+                        weight: "bold",
+                        family: "Inter, system-ui, sans-serif",
+                      },
+                      padding: {
+                        top: 10,
+                        bottom: 20,
+                      },
+                    },
+                    annotation: {
+                      annotations: {
+                        ellipse: {
+                          type: "ellipse",
+                          xMin: yawMean - yawSpread,
+                          xMax: yawMean + yawSpread,
+                          yMin: pitchMean - pitchSpread,
+                          yMax: pitchMean + pitchSpread,
+                          backgroundColor: "rgba(6, 182, 212, 0.08)",
+                          borderColor: "rgba(6, 182, 212, 0.4)",
+                          borderWidth: 2,
+                          borderDash: [8, 4],
+                        },
+                        centerPoint: {
+                          type: "point",
+                          xValue: yawMean,
+                          yValue: pitchMean,
+                          backgroundColor: "#dc2626",
+                          borderColor: "#fef2f2",
+                          borderWidth: 2,
+                          radius: 5,
+                        },
+                      },
+                    },
+                  },
+                  scales: {
+                    y: {
+                      beginAtZero: false,
+                      min: -1,
+                      max: 1,
+                      title: {
+                        display: true,
+                        text: "Pitch (Up/Down)",
+                        font: {
+                          size: 12,
+                          family: "Inter, system-ui, sans-serif",
+                        },
+                      },
+                      grid: {
+                        color: "rgba(0, 0, 0, 0.05)",
+                        lineWidth: 1,
+                      },
+                      ticks: {
+                        stepSize: 0.5,
+                        font: {
+                          size: 11,
+                        },
+                      },
+                    },
+                    x: {
+                      min: -1,
+                      max: 1,
+                      title: {
+                        display: true,
+                        text: "Yaw (Left/Right)",
+                        font: {
+                          size: 12,
+                          family: "Inter, system-ui, sans-serif",
+                        },
+                      },
+                      grid: {
+                        color: "rgba(0, 0, 0, 0.05)",
+                        lineWidth: 1,
+                      },
+                      ticks: {
+                        stepSize: 0.5,
+                        font: {
+                          size: 11,
+                        },
+                      },
+                    },
+                  },
+                  interaction: {
+                    intersect: true,
+                    mode: "nearest",
+                  },
+                }}
+              />
+            )}
+            {selectedChart === "doughnut" && (
+              <Doughnut
+                data={{
+                  labels: ["Good Eye Contact", "Poor Eye Contact"],
+                  datasets: [
+                    {
+                      data: [
+                        eyeContactFrames,
+                        totalFrames - eyeContactFrames,
+                      ],
+                      backgroundColor: ["#10b981", "#ef4444"],
+                      borderColor: ["#059669", "#dc2626"],
+                      borderWidth: 3,
+                      hoverOffset: 8,
+                    },
+                  ],
+                }}
+                options={{
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  plugins: {
+                    legend: {
+                      position: "bottom",
+                      labels: {
+                        font: {
+                          size: 13,
+                          family: "Inter, system-ui, sans-serif",
+                        },
+                        padding: 25,
+                        usePointStyle: true,
+                        pointStyle: "circle",
+                      },
+                    },
+                    title: {
+                      display: true,
+                      text: `Overall Eye Contact: ${(
+                        (eyeContactFrames / totalFrames) *
+                        100
+                      ).toFixed(1)}%`,
+                      font: {
+                        size: 18,
+                        weight: "bold",
+                        family: "Inter, system-ui, sans-serif",
+                      },
+                      padding: {
+                        top: 10,
+                        bottom: 30,
+                      },
+                    },
+                  },
+                }}
+              />
+            )}
+            {selectedChart === "speech" && speechData && speechData.wpm_history && speechData.wpm_history.length > 0 && (
+              <Line
+                data={{
+                  labels: speechData.wpm_history.map((_, index) => index),
+                  datasets: [
+                    {
+                      label: "Words Per Minute",
+                      data: speechData.wpm_history,
+                      borderColor: "#06b6d4",
+                      backgroundColor: "rgba(6, 182, 212, 0.1)",
+                      borderWidth: 2,
+                      pointRadius: 2,
+                      pointHoverRadius: 5,
+                      tension: 0.2,
+                      yAxisID: 'y',
+                    },
+                    {
+                      label: "Loudness (LUFS)",
+                      data: speechData.loudness_history,
+                      borderColor: "#f59e0b",
+                      backgroundColor: "rgba(245, 158, 11, 0.1)",
+                      borderWidth: 2,
+                      pointRadius: 2,
+                      pointHoverRadius: 5,
+                      tension: 0.2,
+                      yAxisID: 'y1',
+                    },
+                  ],
+                }}
+                options={{
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  animation: true,
+                  plugins: {
+                    zoom: {
+                      zoom: {
+                        wheel: { enabled: true },
+                        pinch: { enabled: true },
+                        mode: "x",
+                      },
+                      pan: {
+                        enabled: true,
+                        mode: "x",
+                      },
+                      limits: {
+                        x: {
+                          min: 0,
+                          max: speechData.wpm_history.length - 1,
+                        },
+                      },
+                    },
+                    legend: {
+                      position: "top",
+                      labels: {
+                        font: {
+                          size: 12,
+                          family: "Inter, system-ui, sans-serif",
+                        },
+                        padding: 20,
+                        usePointStyle: true,
+                        pointStyle: "line",
+                      },
+                    },
+                    title: {
+                      display: true,
+                      text: "Speech Analysis Over Time",
+                      font: {
+                        size: 16,
+                        weight: "bold",
+                        family: "Inter, system-ui, sans-serif",
+                      },
+                      padding: {
+                        top: 10,
+                        bottom: 20,
+                      },
+                    },
+                  },
+                  scales: {
+                    y: {
+                      type: 'linear',
+                      display: true,
+                      position: 'left',
+                      title: {
+                        display: true,
+                        text: "Words Per Minute",
+                        font: {
+                          size: 12,
+                          family: "Inter, system-ui, sans-serif",
+                        },
+                      },
+                      grid: {
+                        color: "rgba(0, 0, 0, 0.05)",
+                        lineWidth: 1,
+                      },
+                      ticks: {
+                        font: {
+                          size: 11,
+                        },
+                      },
+                    },
+                    y1: {
+                      type: 'linear',
+                      display: true,
+                      position: 'right',
+                      title: {
+                        display: true,
+                        text: "Loudness (LUFS)",
+                        font: {
+                          size: 12,
+                          family: "Inter, system-ui, sans-serif",
+                        },
+                      },
+                      grid: {
+                        drawOnChartArea: false,
+                      },
+                      ticks: {
+                        font: {
+                          size: 11,
+                        },
+                      },
+                    },
+                    x: {
+                      title: {
+                        display: true,
+                        text: "Speech Segment",
+                        font: {
+                          size: 12,
+                          family: "Inter, system-ui, sans-serif",
+                        },
+                      },
+                      grid: {
+                        color: "rgba(0, 0, 0, 0.05)",
+                        lineWidth: 1,
+                      },
+                      ticks: {
+                        font: {
+                          size: 11,
+                        },
+                      },
+                    },
+                  },
+                  interaction: {
+                    intersect: true,
+                    mode: "nearest",
+                  },
+                }}
+              />
+            )}
+            {selectedChart === "speech" && (!speechData || !speechData.wpm_history || speechData.wpm_history.length === 0) && (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#6b7280' }}>
+                No speech data available
+              </div>
+            )}
+          </div>
+        )}
+
+      <div className="stats-summary">
+        <div className="stat-item">
+          <span className="stat-label">Yaw Spread</span>
+          <span className="stat-value">{yawSpread.toFixed(3)}</span>
+        </div>
+        <div className="stat-item">
+          <span className="stat-label">Pitch Spread</span>
+          <span className="stat-value">{pitchSpread.toFixed(3)}</span>
+        </div>
+        <div className="stat-item">
+          <span className="stat-label">Yaw Mean</span>
+          <span className="stat-value">{yawMean.toFixed(3)}</span>
+        </div>
+        <div className="stat-item">
+          <span className="stat-label">Pitch Mean</span>
+          <span className="stat-value">{pitchMean.toFixed(3)}</span>
+        </div>
+        <div className="stat-item">
+          <span className="stat-label">Total Segments</span>
+          <span className="stat-value">
+            {metrics.current.eyeContactSegments.length}
+          </span>
+        </div>
+      </div>
+
+      <div className="chart-guide">
+        {selectedChart === "line" && (
+          <div className="guide-content">
+            <p>
+              <strong>📈 Time Series:</strong> Shows head movement over time.
+              Hover over colored segments for details.{" "}
+              <strong>Green = Good eye contact (≥60%)</strong>,{" "}
+              <strong>Red = Poor eye contact (&lt;60%)</strong>.
+            </p>
+            <p>
+              <strong>Classifications:</strong>{" "}
+              <em>Deliberate Audience Engagement</em> (high movement + good
+              eye contact),
+              <em>Likely Distraction</em> (high movement + poor eye contact),
+              <em>Focused Direct Communication</em> (low movement + good eye
+              contact),
+              <em>Poor Engagement</em> (low movement + poor eye contact).
+            </p>
+            <p>
+              <strong>Controls:</strong> Mouse wheel to zoom horizontally,
+              click-drag to pan, "Reset Zoom" to return to full view.
+            </p>
+          </div>
+        )}
+
+        {selectedChart === "scatter" && (
+          <div className="guide-content">
+            <p>
+              <strong>📊 Distribution:</strong> Each dot shows your head
+              position at a moment in time. The{" "}
+              <strong>dashed ellipse</strong> shows your typical movement
+              range, <strong>red dot</strong> marks average position.
+            </p>
+            <p>
+              <strong>Interpretation:</strong> Tight cluster = consistent
+              positioning, wide spread = dynamic movement. Mouse wheel to
+              zoom, click-drag to pan.
+            </p>
+          </div>
+        )}
+
+        {selectedChart === "doughnut" && (
+          <div className="guide-content">
+            <p>
+              <strong>🍩 Eye Contact Summary:</strong> Overall performance as
+              percentage of total time.{" "}
+              <strong>Green = Good eye contact</strong>,{" "}
+              <strong>Red = Poor eye contact</strong>.
+            </p>
+            <p>
+              <strong>Benchmarks:</strong> 80%+ (Excellent), 60-79% (Good),
+              40-59% (Needs improvement), &lt;40% (Poor).{" "}
+              <strong>Tip:</strong> Look at camera lens, not screen.
+            </p>
+          </div>
+        )}
+
+        {selectedChart === "speech" && (
+          <div className="guide-content">
+            <p>
+              <strong>🎤 Speech Analysis:</strong> Shows WPM and Loudness over time.
+              <strong>Blue line = Words Per Minute</strong>,{" "}
+              <strong>Orange line = Loudness (LUFS)</strong>.
+            </p>
+            <p>
+              <strong>Pattern Analysis:</strong>{" "}
+              <em>High Volume + Low Speed</em> = Significant words/emphasis,{" "}
+              <em>Low Volume + High Speed</em> = Insignificant words/fillers,{" "}
+              <em>Both Low or Both High</em> = Poor practice, needs improvement.
+            </p>
+            <p>
+              <strong>Controls:</strong> Mouse wheel to zoom horizontally,
+              click-drag to pan, "Reset Zoom" to return to full view.
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
+  </>
+);
 }
