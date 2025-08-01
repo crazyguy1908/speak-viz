@@ -329,7 +329,6 @@ export default function FaceMetricVisualizations({ metrics }) {
     const classification = classifySegment(seg, yawSpread, pitchSpread);
     const lines = [
       `Frames: ${seg.start} – ${seg.end}`,
-      `Time: ${frameToTime(seg.start, fps)} – ${frameToTime(seg.end, fps)} s`,
       `Eye Contact: ${(seg.eyeContactRatio * 100).toFixed(0)}%`,
       `Classification: ${classification}`,
     ];
