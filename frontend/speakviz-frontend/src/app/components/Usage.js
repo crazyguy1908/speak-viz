@@ -8,35 +8,37 @@ import { BarChart3, AlertCircle, CheckCircle, Infinity } from "lucide-react";
 import "./Usage.css";
 
 export default function Usage() {
-  const [usageInfo, setUsageInfo] = useState({ current: 0, limit: 10, bypassed: false });
+  const [usageInfo, setUsageInfo] = useState({
+    current: 0,
+    limit: 10,
+    bypassed: false,
+  });
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
   const checkUsageLimits = async (user) => {
     if (!user) return;
-    
+
     try {
-      // Get user profile to check if they have bypass privileges
       const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('usage_limit_bypassed')
-        .eq('id', user.id)
+        .from("profiles")
+        .select("usage_limit_bypassed")
+        .eq("id", user.id)
         .single();
 
-      if (profileError && profileError.code !== 'PGRST116') {
-        console.error('Error fetching profile:', profileError);
+      if (profileError && profileError.code !== "PGRST116") {
+        console.error("Error fetching profile:", profileError);
       }
 
       const bypassed = profile?.usage_limit_bypassed || false;
 
-      // Count current videos for this user
       const { count, error: countError } = await supabase
-        .from('videos')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', user.id);
+        .from("videos")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", user.id);
 
       if (countError) {
-        console.error('Error counting videos:', countError);
+        console.error("Error counting videos:", countError);
         return;
       }
 
@@ -44,14 +46,16 @@ export default function Usage() {
       setUsageInfo({ current, limit: 10, bypassed });
       setLoading(false);
     } catch (error) {
-      console.error('Error checking usage limits:', error);
+      console.error("Error checking usage limits:", error);
       setLoading(false);
     }
   };
 
   useEffect(() => {
     const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (user) {
         checkUsageLimits(user);
       } else {
@@ -100,8 +104,10 @@ export default function Usage() {
 
               <div className="svz-usage-progress">
                 <div className="svz-usage-progress-bar">
-                  <div 
-                    className={`svz-usage-progress-fill ${isNearLimit ? 'svz-usage-progress-warning' : ''} ${isAtLimit ? 'svz-usage-progress-danger' : ''}`}
+                  <div
+                    className={`svz-usage-progress-fill ${
+                      isNearLimit ? "svz-usage-progress-warning" : ""
+                    } ${isAtLimit ? "svz-usage-progress-danger" : ""}`}
                     style={{ width: `${Math.min(usagePercentage, 100)}%` }}
                   ></div>
                 </div>
@@ -134,14 +140,14 @@ export default function Usage() {
             </div>
 
             <div className="svz-usage-actions">
-              <Button 
+              <Button
                 onClick={() => router.push("/recorder")}
                 className="svz-usage-record-btn"
                 disabled={!usageInfo.bypassed && isAtLimit}
               >
                 New Recording
               </Button>
-              <Button 
+              <Button
                 onClick={() => router.push("/recordings")}
                 variant="outline"
                 className="svz-usage-view-btn"
@@ -155,7 +161,11 @@ export default function Usage() {
                 <AlertCircle className="svz-usage-notice-icon" />
                 <div>
                   <h4>Limit Reached</h4>
-                  <p>You've reached your limit of {usageInfo.limit} videos. Contact support to upgrade your account for unlimited access.</p>
+                  <p>
+                    You've reached your limit of {usageInfo.limit} videos.
+                    Contact support to upgrade your account for unlimited
+                    access.
+                  </p>
                 </div>
               </div>
             )}
@@ -165,7 +175,10 @@ export default function Usage() {
                 <AlertCircle className="svz-usage-notice-icon" />
                 <div>
                   <h4>Approaching Limit</h4>
-                  <p>You're close to your limit. Consider deleting old recordings or contact support to upgrade your account.</p>
+                  <p>
+                    You're close to your limit. Consider deleting old recordings
+                    or contact support to upgrade your account.
+                  </p>
                 </div>
               </div>
             )}
@@ -174,4 +187,4 @@ export default function Usage() {
       </div>
     </div>
   );
-} 
+}

@@ -10,7 +10,7 @@ export default function FeedbackModal({ isOpen, onClose, videoData }) {
 
   const parsePoints = (text, type) => {
     if (!text) return [];
-    
+
     const patterns = {
       strengths: /(\d+)\*(.*?)\*\1/g,
       weaknesses: /(\d+)#(.*?)#\1/g,
@@ -30,8 +30,6 @@ export default function FeedbackModal({ isOpen, onClose, videoData }) {
   if (!isOpen || !videoData) return null;
 
   const { recommendations, strengths, weaknesses, grammar_points } = videoData;
-  
-
 
   const getCurrentPoints = () => {
     let points = [];
@@ -48,19 +46,21 @@ export default function FeedbackModal({ isOpen, onClose, videoData }) {
       default:
         points = [];
     }
-    
+
     // Convert string arrays to object arrays if needed
-    if (points.length > 0 && typeof points[0] === 'string') {
-      console.log(`Converting string array to object array for ${selectedSection}:`, points);
+    if (points.length > 0 && typeof points[0] === "string") {
+      console.log(
+        `Converting string array to object array for ${selectedSection}:`,
+        points
+      );
       points = points.map((content, index) => ({
         number: (index + 1).toString(),
-        content: content
+        content: content,
       }));
       console.log(`Converted to:`, points);
     }
-    
-    // Ensure all points have valid number properties
-    return points.filter(point => point && (point.number || point.content));
+
+    return points.filter((point) => point && (point.number || point.content));
   };
 
   const currentPoints = getCurrentPoints();
@@ -79,7 +79,7 @@ export default function FeedbackModal({ isOpen, onClose, videoData }) {
             <X size={20} />
           </Button>
         </div>
-        
+
         <Card className="svz-feedback-modal-card">
           <CardContent className="svz-feedback-modal-content">
             <div className="svz-feedback-sections">
@@ -116,9 +116,13 @@ export default function FeedbackModal({ isOpen, onClose, videoData }) {
                     <button
                       key={`${selectedSection}-${point.number || index}`}
                       className={`svz-feedback-point-btn ${
-                        selectedPoint === parseInt(point.number || 0) ? "active" : ""
+                        selectedPoint === parseInt(point.number || 0)
+                          ? "active"
+                          : ""
                       }`}
-                      onClick={() => setSelectedPoint(parseInt(point.number || 0))}
+                      onClick={() =>
+                        setSelectedPoint(parseInt(point.number || 0))
+                      }
                     >
                       {point.number || index + 1}
                     </button>
@@ -141,4 +145,4 @@ export default function FeedbackModal({ isOpen, onClose, videoData }) {
       </div>
     </div>
   );
-} 
+}

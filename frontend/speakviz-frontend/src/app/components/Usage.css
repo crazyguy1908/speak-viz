@@ -1,5 +1,3 @@
-/* SpeakViz Usage Component Styles */
-
 .svz-usage-container {
   max-width: 800px;
   margin: 0 auto;
@@ -296,21 +294,21 @@
   .svz-usage-container {
     padding: 1rem;
   }
-  
+
   .svz-usage-title {
     font-size: 2rem;
   }
-  
+
   .svz-usage-card-content {
     padding: 1.5rem;
   }
-  
+
   .svz-usage-actions {
     flex-direction: column;
   }
-  
+
   .svz-usage-record-btn,
   .svz-usage-view-btn {
     width: 100%;
   }
-} 
+}
