@@ -17,7 +17,7 @@ class VoiceAnalyzer:
         print("Loading Whisper model...")
         self.whisper_model = None
         try:
-            self.whisper_model = whisper.load_model("tiny")
+            self.whisper_model = whisper.load_model("base")
             print("Whisper model loaded successfully.")
         except Exception as e:
             print(f"Error loading Whisper model: {e}")

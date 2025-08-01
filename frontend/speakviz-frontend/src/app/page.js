@@ -16,14 +16,14 @@ export default function Home() {
       setLoading(false);
       
       if (session) {
-        router.push('/recorder');
+        router.push('/recordings');
       }
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       if (session) {
-        router.push('/recorder');
+        router.push('/recordings');
       } else {
         router.push('/homepage');
       }
