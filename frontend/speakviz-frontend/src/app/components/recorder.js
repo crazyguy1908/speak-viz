@@ -11,7 +11,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import "./recorder.css";
 import AnalysisResults from "./AnalysisResult";
 
-const API_URL = "api.speakviz.net/analyze";
+const API_URL = "https://api.speakviz.net/analyze";
 
 function Recorder({ user }) {
   const [idleStream, setIdleStream] = useState(null);
