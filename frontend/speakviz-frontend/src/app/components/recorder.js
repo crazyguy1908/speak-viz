@@ -342,9 +342,8 @@ function Recorder({ user }) {
     console.log(blobUrl);
 
     const FaceMetrics = FaceAnalysisMetrics.analyzeHeadOrientationSpread
-      ? FaceAnalysisMetrics.analyzeHeadOrientationSpread(metrics)
+      ? FaceAnalysisMetrics.analyzeHeadOrientationSpread(faceAnalysis)
       : "No face metrics available";
-
     if (FaceAnalysisMetrics.reportEyeContact) {
       FaceAnalysisMetrics.reportEyeContact(metrics);
     }

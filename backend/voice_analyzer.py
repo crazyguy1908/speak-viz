@@ -83,18 +83,31 @@ class VoiceAnalyzer:
             return result
         return []
 
+    def _cleanup_files(self, *files):
+        """Clean up temporary and processed audio files."""
+        for file in files:
+            if file and os.path.exists(file):
+                try:
+                    os.remove(file)
+                    print(f"Cleaned up file: {file}")
+                except Exception as e:
+                    print(f"Error cleaning up file {file}: {e}")
+
     def analyze_audio(self, audio_file):
-        print(f"Analyzing audio file: {audio_file}")
-        if not os.path.exists(audio_file):
-            raise FileNotFoundError(f"Audio file not found: {audio_file}")
-        transcript, words = self.transcribe_audio(audio_file)
-        if not words:
-            print("No words detected in audio")
-            return None
-        start_time = words[0]['start']
-        end_time = words[-1]['end']
-        print(f"Trimming audio from {start_time:.2f}s to {end_time:.2f}s")
+        temp_file = None
         try:
+            print(f"Analyzing audio file: {audio_file}")
+            if not os.path.exists(audio_file):
+                raise FileNotFoundError(f"Audio file not found: {audio_file}")
+            transcript, words = self.transcribe_audio(audio_file)
+            if not words:
+                print("No words detected in audio")
+                return None
+            
+            start_time = words[0]['start']
+            end_time = words[-1]['end']
+            print(f"Trimming audio from {start_time:.2f}s to {end_time:.2f}s")
+            
             y, sr = sf.read(audio_file)
             if len(y.shape) > 1:
                 y = np.mean(y, axis=1)
@@ -103,6 +116,7 @@ class VoiceAnalyzer:
             y = y[start_sample:end_sample]
             temp_file = audio_file + '.trimmed.wav'
             sf.write(temp_file, y, sr)
+            
             offset = start_time
             for word in words:
                 word['start'] -= offset
@@ -185,12 +199,17 @@ class VoiceAnalyzer:
                 'emphasized_words': emphasized_words
             }
             return analysis
+            
         except Exception as e:
             print(f"Error processing audio: {e}")
             return None
         finally:
-            if os.path.exists(temp_file):
-                os.remove(temp_file)
+            if temp_file and os.path.exists(temp_file):
+                try:
+                    os.remove(temp_file)
+                    print(f"Cleaned up temporary file: {temp_file}")
+                except Exception as e:
+                    print(f"Error cleaning up temporary file: {e}")
 
     def _analyze_pitch(self, sound):
         try:
