@@ -56,12 +56,9 @@ export function updateOrientationMetrics(
   m.pitchHistory.push(pitch);
   m.gazeHistory.push(gaze);
 
-<<<<<<< HEAD
-  if (m.yawHistory.length > 1000) { 
-=======
+
+
   if (m.yawHistory.length > 1000) {
-    // Increased from 100 to allow more data
->>>>>>> ab0f17a39771be9af9db74db52c9880859ee3c24
     m.yawHistory.shift();
     m.pitchHistory.shift();
     m.gazeHistory.shift();
@@ -76,15 +73,14 @@ export function updateOrientationMetrics(
     const eyeContactRatio = segment.eyeContactFrames / segment.totalFrames;
     m.eyeContactSegments.push({
       start: segment.start,
-      end: segment.start + segment.totalFrames - 1, // Fixed: end should be start + duration - 1
+      end: segment.start + segment.totalFrames - 1, 
       duration: segment.totalFrames,
       eyeContactRatio: eyeContactRatio,
       isGoodSegment: eyeContactRatio >= 0.6,
     });
 
-    // Start new segment immediately after the previous one ends
     m.currentSegment = {
-      start: segment.start + segment.totalFrames, // Fixed: start from next frame
+      start: segment.start + segment.totalFrames, 
       eyeContactFrames: 0,
       totalFrames: 0,
     };
@@ -100,7 +96,6 @@ export function analyzeHeadOrientationSpread(metrics) {
     return;
   }
 
-  // Calculating yaw spread by taking the standard deviation
   const yawMean = m.yawHistory.reduce((a, b) => a + b, 0) / m.yawHistory.length;
   const yawVariance =
     m.yawHistory.reduce((sum, yaw) => sum + Math.pow(yaw - yawMean, 2), 0) /
