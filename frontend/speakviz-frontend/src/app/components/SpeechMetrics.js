@@ -130,27 +130,6 @@ export default function SpeechMetrics({ speechData, isStopped = false }) {
           </div>
         </div>
 
-        {/* Emphasized Words Card */}
-        <div className="svz-metric-card">
-          <div
-            className="svz-metric-icon"
-            style={{ backgroundColor: "#8b5cf620" }}
-          >
-            <span className="svz-metric-icon-text">💬</span>
-          </div>
-          <div className="svz-metric-content">
-            <div className="svz-metric-label">Emphasized Words</div>
-            <div className="svz-metric-value">
-              {emphasized_words ? emphasized_words.length : 0}
-            </div>
-            <div className="svz-metric-details">
-              {emphasized_words && emphasized_words.length > 0
-                ? emphasized_words.slice(0, 3).join(", ") +
-                  (emphasized_words.length > 3 ? "..." : "")
-                : "None detected"}
-            </div>
-          </div>
-        </div>
 
         {/* Emotion Card */}
         <div className="svz-metric-card">
