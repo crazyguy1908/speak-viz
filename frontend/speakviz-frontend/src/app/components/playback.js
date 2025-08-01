@@ -54,6 +54,9 @@ export default function MyVideosPage() {
         if (urlError) {
           console.warn("Could not get signed URL for", row.file_path, urlError);
         }
+        
+
+        
         return {
           ...row,
           url: data?.signedUrl || null,

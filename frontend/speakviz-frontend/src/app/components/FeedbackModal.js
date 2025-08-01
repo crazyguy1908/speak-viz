@@ -9,6 +9,8 @@ export default function FeedbackModal({ isOpen, onClose, videoData }) {
   const [selectedPoint, setSelectedPoint] = useState(1);
 
   const parsePoints = (text, type) => {
+    if (!text) return [];
+    
     const patterns = {
       strengths: /(\d+)\*(.*?)\*\1/g,
       weaknesses: /(\d+)#(.*?)#\1/g,
@@ -18,7 +20,9 @@ export default function FeedbackModal({ isOpen, onClose, videoData }) {
     const matches = [];
     let match;
     while ((match = patterns[type].exec(text)) !== null) {
-      matches.push({ number: match[1], content: match[2].trim() });
+      if (match[1] && match[2]) {
+        matches.push({ number: match[1], content: match[2].trim() });
+      }
     }
     return matches;
   };
@@ -26,18 +30,37 @@ export default function FeedbackModal({ isOpen, onClose, videoData }) {
   if (!isOpen || !videoData) return null;
 
   const { recommendations, strengths, weaknesses, grammar_points } = videoData;
+  
+
 
   const getCurrentPoints = () => {
+    let points = [];
     switch (selectedSection) {
       case "strengths":
-        return strengths || parsePoints(recommendations, "strengths");
+        points = strengths || parsePoints(recommendations, "strengths");
+        break;
       case "weaknesses":
-        return weaknesses || parsePoints(recommendations, "weaknesses");
+        points = weaknesses || parsePoints(recommendations, "weaknesses");
+        break;
       case "grammar":
-        return grammar_points || parsePoints(recommendations, "grammar");
+        points = grammar_points || parsePoints(recommendations, "grammar");
+        break;
       default:
-        return [];
+        points = [];
     }
+    
+    // Convert string arrays to object arrays if needed
+    if (points.length > 0 && typeof points[0] === 'string') {
+      console.log(`Converting string array to object array for ${selectedSection}:`, points);
+      points = points.map((content, index) => ({
+        number: (index + 1).toString(),
+        content: content
+      }));
+      console.log(`Converted to:`, points);
+    }
+    
+    // Ensure all points have valid number properties
+    return points.filter(point => point && (point.number || point.content));
   };
 
   const currentPoints = getCurrentPoints();
@@ -89,22 +112,22 @@ export default function FeedbackModal({ isOpen, onClose, videoData }) {
             {currentPoints.length > 0 ? (
               <div className="svz-feedback-content">
                 <div className="svz-feedback-points-sidebar">
-                  {currentPoints.map((point) => (
+                  {currentPoints.map((point, index) => (
                     <button
-                      key={`${selectedSection}-${point.number}`}
+                      key={`${selectedSection}-${point.number || index}`}
                       className={`svz-feedback-point-btn ${
-                        selectedPoint === parseInt(point.number) ? "active" : ""
+                        selectedPoint === parseInt(point.number || 0) ? "active" : ""
                       }`}
-                      onClick={() => setSelectedPoint(parseInt(point.number))}
+                      onClick={() => setSelectedPoint(parseInt(point.number || 0))}
                     >
-                      {point.number}
+                      {point.number || index + 1}
                     </button>
                   ))}
                 </div>
 
                 <div className="svz-feedback-point-content">
                   {currentPoints.find(
-                    (p) => parseInt(p.number) === selectedPoint
+                    (p) => parseInt(p.number || 0) === selectedPoint
                   )?.content || "No content available"}
                 </div>
               </div>

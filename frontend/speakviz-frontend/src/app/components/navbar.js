@@ -1,7 +1,7 @@
-import * as React from "react"
-import Link from "next/link"
-import ProfileDropdown from "./ProfileDropdown"
-import './navbar.css';
+import * as React from "react";
+import Link from "next/link";
+import ProfileDropdown from "./ProfileDropdown";
+import "./navbar.css";
 
 export default function Navbar() {
   return (
@@ -12,7 +12,7 @@ export default function Navbar() {
             Home
           </Link>
           <Link href="/recordings" className="svz-navbar-link">
-            Playback
+            My Recordings
           </Link>
         </div>
         <div className="svz-navbar-profile">
