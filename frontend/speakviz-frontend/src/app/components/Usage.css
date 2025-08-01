@@ -1,0 +1,316 @@
+/* SpeakViz Usage Component Styles */
+
+.svz-usage-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+.svz-usage-header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.svz-usage-title {
+  font-size: 2.5rem;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+  background: linear-gradient(to right, #2563eb, #9333ea);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.svz-usage-subtitle {
+  font-size: 1.125rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+.svz-usage-content {
+  display: flex;
+  justify-content: center;
+}
+
+.svz-usage-card {
+  width: 100%;
+  max-width: 600px;
+  border: none;
+  box-shadow: 0 8px 32px rgba(30, 64, 175, 0.08);
+}
+
+.svz-usage-card-content {
+  padding: 2rem;
+}
+
+.svz-usage-stats {
+  margin-bottom: 2rem;
+}
+
+.svz-usage-stat {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.svz-usage-stat-icon {
+  width: 3rem;
+  height: 3rem;
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  border-radius: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.svz-usage-icon {
+  width: 1.5rem;
+  height: 1.5rem;
+  color: #fff;
+}
+
+.svz-usage-stat-info {
+  flex: 1;
+}
+
+.svz-usage-stat-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #374151;
+  margin: 0 0 0.25rem 0;
+}
+
+.svz-usage-stat-value {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #1f2937;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.svz-usage-unlimited-badge {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: #fff;
+  padding: 0.25rem 0.75rem;
+  border-radius: 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.svz-usage-infinity-icon {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+.svz-usage-progress {
+  margin-bottom: 1.5rem;
+}
+
+.svz-usage-progress-bar {
+  width: 100%;
+  height: 0.75rem;
+  background: #e5e7eb;
+  border-radius: 0.375rem;
+  overflow: hidden;
+  margin-bottom: 0.5rem;
+}
+
+.svz-usage-progress-fill {
+  height: 100%;
+  background: linear-gradient(135deg, #10b981, #059669);
+  transition: width 0.3s ease;
+}
+
+.svz-usage-progress-warning {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+
+.svz-usage-progress-danger {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+}
+
+.svz-usage-progress-text {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin: 0;
+  text-align: center;
+}
+
+.svz-usage-status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  font-weight: 500;
+}
+
+.svz-usage-status-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.svz-usage-status-ok {
+  background: #f0fdf4;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+}
+
+.svz-usage-status-warning {
+  background: #fffbeb;
+  color: #92400e;
+  border: 1px solid #fed7aa;
+}
+
+.svz-usage-status-limit {
+  background: #fef2f2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+
+.svz-usage-status-unlimited {
+  background: #f0fdf4;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+}
+
+.svz-usage-actions {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.svz-usage-record-btn {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: #fff;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  transition: all 0.2s;
+  flex: 1;
+  min-width: 150px;
+}
+
+.svz-usage-record-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #059669, #047857);
+  transform: translateY(-1px);
+}
+
+.svz-usage-record-btn:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.svz-usage-view-btn {
+  background: transparent;
+  color: #374151;
+  border: 1px solid #d1d5db;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  transition: all 0.2s;
+  flex: 1;
+  min-width: 150px;
+}
+
+.svz-usage-view-btn:hover {
+  background: #f9fafb;
+  border-color: #9ca3af;
+}
+
+.svz-usage-limit-notice,
+.svz-usage-warning-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  margin-top: 1rem;
+}
+
+.svz-usage-limit-notice {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+}
+
+.svz-usage-warning-notice {
+  background: #fffbeb;
+  border: 1px solid #fed7aa;
+}
+
+.svz-usage-notice-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  margin-top: 0.125rem;
+  flex-shrink: 0;
+}
+
+.svz-usage-limit-notice .svz-usage-notice-icon {
+  color: #dc2626;
+}
+
+.svz-usage-warning-notice .svz-usage-notice-icon {
+  color: #d97706;
+}
+
+.svz-usage-limit-notice h4,
+.svz-usage-warning-notice h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0 0 0.25rem 0;
+}
+
+.svz-usage-limit-notice h4 {
+  color: #991b1b;
+}
+
+.svz-usage-warning-notice h4 {
+  color: #92400e;
+}
+
+.svz-usage-limit-notice p,
+.svz-usage-warning-notice p {
+  font-size: 0.875rem;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.svz-usage-limit-notice p {
+  color: #7f1d1d;
+}
+
+.svz-usage-warning-notice p {
+  color: #78350f;
+}
+
+@media (max-width: 640px) {
+  .svz-usage-container {
+    padding: 1rem;
+  }
+  
+  .svz-usage-title {
+    font-size: 2rem;
+  }
+  
+  .svz-usage-card-content {
+    padding: 1.5rem;
+  }
+  
+  .svz-usage-actions {
+    flex-direction: column;
+  }
+  
+  .svz-usage-record-btn,
+  .svz-usage-view-btn {
+    width: 100%;
+  }
+} 

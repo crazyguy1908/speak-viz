@@ -6,17 +6,81 @@
   margin-left: auto;
   margin-right: auto;
 }
+
+.svz-playback-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2.5rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
 .svz-playback-title {
   font-size: 2.25rem;
   font-weight: bold;
-  margin-bottom: 2.5rem;
-  text-align: center;
+  margin: 0;
   background: linear-gradient(to right, #2563eb, #9333ea);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
   color: transparent;
 }
+
+.svz-playback-header-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.svz-playback-usage-info {
+  background: #f8fafc;
+  padding: 0.5rem 1rem;
+  border-radius: 0.75rem;
+  border: 1px solid #e2e8f0;
+}
+
+.svz-playback-usage-text {
+  font-size: 0.875rem;
+  color: #475569;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.svz-playback-bypass-badge {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: #fff;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-left: 0.5rem;
+}
+
+.svz-playback-new-recording-btn {
+  background: linear-gradient(to right, #2563eb, #9333ea);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  transition: all 0.2s;
+  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.2);
+}
+
+.svz-playback-new-recording-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.3);
+}
+
+.svz-playback-empty {
+  text-align: center;
+  padding: 3rem 0;
+}
+
 .svz-playback-grid {
   display: grid;
   grid-template-columns: 1fr;
@@ -35,6 +99,11 @@
 .svz-playback-card {
   border: none;
   box-shadow: 0 8px 32px rgba(30, 64, 175, 0.08);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.svz-playback-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(30, 64, 175, 0.12);
 }
 .svz-playback-card-content {
   padding: 1.5rem;
@@ -42,11 +111,13 @@
   flex-direction: column;
   gap: 1rem;
 }
+
 .svz-playback-video {
   width: 100%;
   border-radius: 0.5rem;
   box-shadow: 0 4px 16px rgba(30, 64, 175, 0.08);
 }
+
 .svz-playback-unavailable {
   color: #9ca3af;
   text-align: center;
@@ -54,18 +125,80 @@
 .svz-playback-meta {
   margin-top: 0.5rem;
 }
-.svz-playback-filename {
+.svz-playback-title-text {
   font-weight: 600;
   font-size: 1.125rem;
+  margin: 0 0 0.5rem 0;
+  color: #1f2937;
 }
 .svz-playback-meta-text {
   color: #4b5563;
   font-size: 0.875rem;
+  margin: 0.25rem 0;
 }
-.svz-playback-download-btn {
+
+.svz-playback-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
   margin-top: 0.5rem;
+}
+
+.svz-playback-analysis-btn {
+  background: linear-gradient(to right, #2563eb, #9333ea);
+  color: white;
+  border: none;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  transition: all 0.2s;
+  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.2);
   width: 100%;
 }
+
+.svz-playback-analysis-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.3);
+}
+
+.svz-playback-download-btn {
+  background: linear-gradient(to right, #10b981, #059669);
+  color: white;
+  border: none;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  transition: all 0.2s;
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.2);
+  width: 100%;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.svz-playback-download-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.3);
+}
+
+.svz-playback-delete-btn {
+  background: linear-gradient(to right, #ef4444, #dc2626);
+  color: white;
+  border: none;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  transition: all 0.2s;
+  box-shadow: 0 4px 16px rgba(239, 68, 68, 0.2);
+  width: 100%;
+}
+
+.svz-playback-delete-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(239, 68, 68, 0.3);
+}
+
 .svz-playback-msg {
   text-align: center;
   font-size: 1.125rem;
@@ -80,6 +213,7 @@
 .svz-playback-msg-empty {
   color: #6b7280;
 }
+
 .svz-playback-recommendations {
   margin-top: 1rem;
   padding: 1rem;
@@ -104,4 +238,28 @@
 .svz-playback-section li {
   margin-bottom: 0.25rem;
   color: #666;
+}
+
+@media (max-width: 768px) {
+  .svz-playback-header {
+    flex-direction: column;
+    align-items: stretch;
+    text-align: center;
+  }
+  
+  .svz-playback-header-right {
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  
+  .svz-playback-title {
+    font-size: 1.875rem;
+  }
+  
+  .svz-playback-new-recording-btn {
+    width: 100%;
+    max-width: 300px;
+    margin: 0 auto;
+  }
 }

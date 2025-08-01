@@ -14,13 +14,31 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { supabase } from "../../supabaseClient";
 import "./home.css";
 
 export default function SpeakVizLanding() {
   const router = useRouter();
+  const [session, setSession] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setLoading(false);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
   return (
     <div className="svz-home-root">
-      {/* Header with Login/Signup */}
+      {/* Header with Login/Signup or My Recordings */}
       <header className="svz-home-header">
         <div className="svz-home-header-left">
           <div className="svz-home-logo">
@@ -29,19 +47,32 @@ export default function SpeakVizLanding() {
           <span className="svz-home-title">SpeakViz</span>
         </div>
         <div className="svz-home-header-right">
-          <Button
-            variant="ghost"
-            className="svz-home-login-btn"
-            onClick={() => router.push("/signin")}
-          >
-            Log In
-          </Button>
-          <Button
-            className="svz-home-signup-btn"
-            onClick={() => router.push("/signin")}
-          >
-            Sign Up Free
-          </Button>
+          {!loading && (
+            session ? (
+              <Button
+                className="svz-home-signup-btn"
+                onClick={() => router.push("/recordings")}
+              >
+                My Recordings
+              </Button>
+            ) : (
+              <>
+                <Button
+                  variant="ghost"
+                  className="svz-home-login-btn"
+                  onClick={() => router.push("/signin")}
+                >
+                  Log In
+                </Button>
+                <Button
+                  className="svz-home-signup-btn"
+                  onClick={() => router.push("/signin")}
+                >
+                  Sign Up Free
+                </Button>
+              </>
+            )
+          )}
         </div>
       </header>
 
@@ -66,23 +97,49 @@ export default function SpeakVizLanding() {
         </p>
 
         <div className="svz-home-hero-cta">
-          <Button
-            size="lg"
-            className="svz-home-hero-cta-btn"
-            onClick={() => router.push("/signin")}
-          >
-            <PlayCircle className="svz-home-hero-cta-icon" />
-            Start Free Trial
-          </Button>
-          <Button
-            size="lg"
-            variant="outline"
-            className="svz-home-hero-cta-btn-outline"
-            onClick={() => router.push("/signin")}
-          >
-            <BarChart3 className="svz-home-hero-cta-icon" />
-            View Demo
-          </Button>
+          {!loading && (
+            session ? (
+              <>
+                <Button
+                  size="lg"
+                  className="svz-home-hero-cta-btn"
+                  onClick={() => router.push("/recorder")}
+                >
+                  <PlayCircle className="svz-home-hero-cta-icon" />
+                  Start Recording
+                </Button>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="svz-home-hero-cta-btn-outline"
+                  onClick={() => router.push("/recordings")}
+                >
+                  <BarChart3 className="svz-home-hero-cta-icon" />
+                  View Recordings
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button
+                  size="lg"
+                  className="svz-home-hero-cta-btn"
+                  onClick={() => router.push("/signin")}
+                >
+                  <PlayCircle className="svz-home-hero-cta-icon" />
+                  Start Free Trial
+                </Button>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="svz-home-hero-cta-btn-outline"
+                  onClick={() => router.push("/signin")}
+                >
+                  <BarChart3 className="svz-home-hero-cta-icon" />
+                  View Demo
+                </Button>
+              </>
+            )
+          )}
         </div>
 
         {/* Hero Image */}
@@ -197,14 +254,16 @@ export default function SpeakVizLanding() {
               </div>
             </div>
 
-            <Button
-              size="lg"
-              className="svz-home-benefits-cta"
-              onClick={() => router.push("/signin")}
-            >
-              Get Started Today
-              <ArrowRight className="svz-home-benefits-cta-icon" />
-            </Button>
+            {!loading && (
+              <Button
+                size="lg"
+                className="svz-home-benefits-cta"
+                onClick={() => session ? router.push("/recorder") : router.push("/signin")}
+              >
+                {session ? "Start Recording" : "Get Started Today"}
+                <ArrowRight className="svz-home-benefits-cta-icon" />
+              </Button>
+            )}
           </div>
 
           <div className="svz-home-benefits-img-wrap">

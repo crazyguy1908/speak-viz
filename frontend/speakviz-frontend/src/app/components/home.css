@@ -46,6 +46,41 @@
   display: flex;
   gap: 0.75rem;
 }
+
+.svz-home-user-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.svz-home-usage-info {
+  background: rgba(255, 255, 255, 0.9);
+  padding: 0.5rem 1rem;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  backdrop-filter: blur(10px);
+}
+
+.svz-home-usage-text {
+  font-size: 0.875rem;
+  color: #475569;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.svz-home-bypass-badge {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: #fff;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-left: 0.5rem;
+}
+
 .svz-home-login-btn {
   background: #fff;
   color: #6366f1;
@@ -613,4 +648,22 @@
   color: #6b7280;
   line-height: 1.6;
   font-size: 0.95rem;
+}
+
+/* Responsive styles for usage information */
+@media (max-width: 768px) {
+  .svz-home-header {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .svz-home-user-info {
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  
+  .svz-home-usage-info {
+    order: -1;
+  }
 }

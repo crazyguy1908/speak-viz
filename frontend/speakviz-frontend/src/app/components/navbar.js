@@ -1,5 +1,6 @@
 import * as React from "react"
 import Link from "next/link"
+import ProfileDropdown from "./ProfileDropdown"
 import './navbar.css';
 
 export default function Navbar() {
@@ -13,9 +14,9 @@ export default function Navbar() {
           <Link href="/recordings" className="svz-navbar-link">
             Playback
           </Link>
-          <Link href="/recorder" className="svz-navbar-link">
-            Recorder
-          </Link>
+        </div>
+        <div className="svz-navbar-profile">
+          <ProfileDropdown />
         </div>
       </nav>
     </div>

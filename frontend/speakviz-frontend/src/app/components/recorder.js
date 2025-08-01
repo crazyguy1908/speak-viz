@@ -17,6 +17,8 @@ const API_URL =
     ? "http://localhost:8000/analyze" // Development API URL
     : "https://api.speakviz.net/analyze"; // Production API URL
 
+const USAGE_LIMIT = 10; // Maximum videos per user
+
 function Recorder({ user }) {
   const [idleStream, setIdleStream] = useState(null);
   const [modelsLoaded, setModelsLoaded] = useState(false);
@@ -24,6 +26,7 @@ function Recorder({ user }) {
   const [feedback, setFeedback] = useState("");
   const [recommendations, setRecommendations] = useState("");
   const [selectedContext, setSelectedContext] = useState("general");
+  const [recordingTitle, setRecordingTitle] = useState("");
   const [analysisData, setAnalysisData] = useState(null);
   const [showOverlay, setShowOverlay] = useState(false);
 
@@ -52,6 +55,8 @@ function Recorder({ user }) {
     { value: "storytelling", label: "Storytelling" },
     { value: "debate", label: "Debate/Discussion" },
   ];
+
+
 
   const resetMetrics = () => {
     metrics.current.frames = 0;
@@ -467,6 +472,7 @@ function Recorder({ user }) {
             file_path: filePath,
             file_size: blob.size,
             duration: videoDuration,
+            title: recordingTitle || `Recording ${new Date().toLocaleString()}`,
             recommendations: analysisData.recommendations,
             strengths: parsedRecommendations.strengths,
             weaknesses: parsedRecommendations.weaknesses,
@@ -526,6 +532,20 @@ function Recorder({ user }) {
                   }) => (
                     <div className="svz-recorder-main">
                       <h1 className="svz-recorder-status">{status}</h1>
+                      <div className="svz-recorder-title">
+                        <label htmlFor="title-input">
+                          Recording Title:{" "}
+                        </label>
+                        <input
+                          id="title-input"
+                          type="text"
+                          value={recordingTitle}
+                          onChange={(e) => setRecordingTitle(e.target.value)}
+                          placeholder="Enter a title for your recording..."
+                          className="svz-recorder-title-input"
+                          disabled={status === "recording"}
+                        />
+                      </div>
                       <div className="svz-recorder-context">
                         <label htmlFor="context-select">
                           Speaking Context:{" "}
@@ -581,6 +601,8 @@ function Recorder({ user }) {
                           Stop Recording
                         </button>
                       </div>
+                      
+
                       <label>
                         <input
                           type="checkbox"
@@ -603,6 +625,8 @@ function Recorder({ user }) {
           </div>
         </div>
       </div>
+      
+
     </>
   );
 }

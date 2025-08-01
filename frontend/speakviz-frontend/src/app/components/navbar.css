@@ -2,8 +2,7 @@
 .svz-navbar-root {
   position: fixed;
   top: 1.5rem;
-  left: 50%;
-  transform: translateX(-50%);
+  right: 1.5rem;
   z-index: 100;
 }
 
@@ -13,11 +12,19 @@
   box-shadow: 0 4px 24px rgba(30, 64, 175, 0.10);
   padding: 0.5rem;
   border: 1px solid #e5e7eb;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .svz-navbar-links {
   display: flex;
   gap: 0.5rem;
+  align-items: center;
+}
+
+.svz-navbar-profile {
+  display: flex;
   align-items: center;
 }
 
@@ -47,8 +54,7 @@
 
 @media (max-width: 768px) {
   .svz-navbar-root {
-    left: 50%;
-    transform: translateX(-50%);
+    right: 0.5rem;
     top: 0.5rem;
   }
 

@@ -1,0 +1,187 @@
+/* SpeakViz Profile Dropdown Styles */
+
+.svz-profile-dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.svz-profile-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.svz-profile-button:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.svz-profile-avatar {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+  transition: all 0.2s ease;
+}
+
+.svz-profile-button:hover .svz-profile-avatar {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+}
+
+.svz-profile-initials {
+  color: #fff;
+  font-weight: 600;
+  font-size: 1rem;
+  text-transform: uppercase;
+}
+
+.svz-profile-chevron {
+  width: 1rem;
+  height: 1rem;
+  color: #6b7280;
+  transition: transform 0.2s ease;
+}
+
+.svz-profile-chevron-open {
+  transform: rotate(180deg);
+}
+
+.svz-profile-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 0.5rem;
+  background: #fff;
+  border-radius: 0.75rem;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  border: 1px solid #e5e7eb;
+  min-width: 200px;
+  z-index: 1000;
+  animation: svz-profile-menu-slide-in 0.2s ease-out;
+}
+
+@keyframes svz-profile-menu-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.svz-profile-menu-header {
+  padding: 1rem;
+  border-bottom: 1px solid #f3f4f6;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.svz-profile-menu-avatar {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.svz-profile-menu-initials {
+  color: #fff;
+  font-weight: 600;
+  font-size: 1rem;
+  text-transform: uppercase;
+}
+
+.svz-profile-menu-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.svz-profile-menu-email {
+  font-size: 0.875rem;
+  color: #374151;
+  font-weight: 500;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.svz-profile-menu-items {
+  padding: 0.5rem;
+}
+
+.svz-profile-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: none;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+  text-align: left;
+}
+
+.svz-profile-menu-item:hover {
+  background: #f9fafb;
+  color: #1f2937;
+}
+
+.svz-profile-menu-item-danger {
+  color: #dc2626;
+}
+
+.svz-profile-menu-item-danger:hover {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.svz-profile-menu-icon {
+  width: 1.125rem;
+  height: 1.125rem;
+  flex-shrink: 0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .svz-profile-menu {
+    right: -0.5rem;
+    min-width: 180px;
+  }
+  
+  .svz-profile-menu-header {
+    padding: 0.75rem;
+  }
+  
+  .svz-profile-menu-items {
+    padding: 0.25rem;
+  }
+  
+  .svz-profile-menu-item {
+    padding: 0.625rem 0.875rem;
+    font-size: 0.8125rem;
+  }
+} 
