@@ -238,7 +238,7 @@ class VoiceAnalyzer:
 
         try:
             genai.configure(api_key="AIzaSyA4j6MyrkAuGqf8cf0dbNnfXYgz75GDq1g")
-            model = genai.GenerativeModel('gemini-2.5-flash-lite')
+            model = genai.GenerativeModel('gemini-2.5-flash')
 
             prompt = (
                 f"Analyze the following JSON voice metrics and face analysis data for public speaking feedback. {context_addition}\n\n"
@@ -254,11 +254,13 @@ class VoiceAnalyzer:
                 f"2. Keyword/transition word analysis\n" 
                 f"3. Vocabulary effectiveness\n"
                 f"Start these points with 1&, 2&, 3& and end with &1, &2, &3\n\n"
+                f"MAKE SURE ALL OF THEM START AND END WITH THE RESPECTIVE CODES"
                 f"Be specific with feedback and reference transcript examples where relevant. Only discuss emphasis patterns if 1-2 emphasized words appear in a sentence."
                 f"THERE SHOULD BE 9 TOTAL POINTS: 3 strengths related to the metrics, 3 weaknesses related to the metrics and 3 points related to grammaer"
                 f"do not make the gramar text bold or add highlights. format it similar to the strengths and weaknesses where it is just the points"
                 f" do not add any styling to the text or asteriks anywhere except where previously specified(only the relavent strength points)"
                 f"do not mention any data is missing or anything like that"
+                f"do not mention missing data at all"
             )
 
             # rest of your existing code stays the same
