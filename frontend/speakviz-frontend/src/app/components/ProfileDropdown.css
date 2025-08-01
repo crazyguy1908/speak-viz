@@ -1,4 +1,3 @@
-/* SpeakViz Profile Dropdown Styles */
 
 .svz-profile-dropdown {
   position: relative;
@@ -165,7 +164,6 @@
   flex-shrink: 0;
 }
 
-/* Responsive adjustments */
 @media (max-width: 640px) {
   .svz-profile-menu {
     right: -0.5rem;

@@ -18,7 +18,7 @@ const API_URL =
     ? "http://localhost:8000/analyze" // Development API URL
     : "https://api.speakviz.net/analyze"; // Production API URL
 
-const USAGE_LIMIT = 10; // Maximum videos per user
+const USAGE_LIMIT = 10; 
 
 function Recorder({ user }) {
   const [idleStream, setIdleStream] = useState(null);
@@ -82,7 +82,6 @@ function Recorder({ user }) {
     const detectionLoopRef = useRef(false);
     const drawLoopRef = useRef(false);
 
-    // Human configuration - optimized for face-only detection
     const humanConfig = {
       backend: "webgl",
       modelBasePath: "/human-models",
@@ -157,7 +156,6 @@ function Recorder({ user }) {
       const playVideo = async () => {
         try {
           await video.play();
-          console.log("Video playing");
         } catch (error) {
           console.error("Error playing video:", error);
         }
@@ -308,7 +306,6 @@ function Recorder({ user }) {
         <video
           className={className}
           ref={videoRef}
-          autoPlay
           muted
           playsInline
           style={{ width: "100%", height: "auto" }}

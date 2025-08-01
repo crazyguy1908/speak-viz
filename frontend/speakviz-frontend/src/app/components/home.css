@@ -245,7 +245,7 @@
 .svz-home-features {
   max-width: 1280px;
   margin: 0 auto;
-  padding: 3rem 1rem; /* Reduced from 8rem */
+  padding: 3rem 1rem; 
 }
 .svz-home-features-header {
   text-align: center;
@@ -319,8 +319,8 @@
 
 .svz-home-benefits {
   background: linear-gradient(to right, #2563eb, #9333ea);
-  padding: 3rem 0; /* Reduced from 8rem */
-  margin-top: 1.5rem; /* Reduced from 4rem */
+  padding: 3rem 0; 
+  margin-top: 1.5rem; 
 }
 .svz-home-benefits-inner {
   max-width: 1280px;
@@ -393,7 +393,7 @@
 .svz-home-testimonials {
   max-width: 1280px;
   margin: 0 auto;
-  padding: 3rem 1rem; /* Reduced from 8rem */
+  padding: 3rem 1rem; 
 }
 .svz-home-testimonials-header {
   text-align: center;
@@ -477,8 +477,8 @@
 
 .svz-home-cta {
   background: #f9fafb;
-  padding: 3rem 0; /* Reduced from 8rem */
-  margin-top: 1.5rem; /* Reduced from 4rem */
+  padding: 3rem 0; 
+  margin-top: 1.5rem; 
 }
 .svz-home-cta-inner {
   max-width: 48rem;
@@ -534,7 +534,7 @@
   color: #6b7280;
 }
 
-/* Features Grid Section */
+
 .svz-home-features-grid {
   max-width: 1280px;
   margin: 0 auto;
@@ -650,7 +650,6 @@
   font-size: 0.95rem;
 }
 
-/* Responsive styles for usage information */
 @media (max-width: 768px) {
   .svz-home-header {
     flex-direction: column;
