@@ -324,7 +324,6 @@ export default function FaceMetricVisualizations({ metrics }) {
     const classification = classifySegment(seg, yawSpread, pitchSpread);
     const lines = [
       `Frames: ${seg.start} – ${seg.end}`,
-      `Duration: ${seg.duration} frames`,
       `Eye Contact: ${(seg.eyeContactRatio * 100).toFixed(0)}%`,
       `Classification: ${classification}`,
     ];
@@ -352,7 +351,7 @@ export default function FaceMetricVisualizations({ metrics }) {
         xAdjust: 10,
         drawTime: "afterDatasetsDraw",
         backgroundColor: "rgba(0,0,0,.95)",
-        color: "white",
+        color: "black",
         font: {
           size: 12,
           weight: "bold",
@@ -422,18 +421,9 @@ export default function FaceMetricVisualizations({ metrics }) {
               >
                 🍩 Eye Contact
               </button>
-              <button
-                className={`selector-btn ${
-                  selectedChart === "speech" ? "active" : ""
-                }`}
-                onClick={() => setSelectedChart("speech")}
-              >
-                🎤 Speech Analysis
-              </button>
             </div>
             {(selectedChart === "line" ||
-              selectedChart === "scatter" ||
-              selectedChart === "speech") && (
+              selectedChart === "scatter") && (
               <button className="reset-btn" onClick={resetZoom}>
                 🔄 Reset Zoom
               </button>

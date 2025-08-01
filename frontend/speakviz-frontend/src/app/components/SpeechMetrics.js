@@ -10,10 +10,8 @@ export default function SpeechMetrics({ speechData, isStopped = false }) {
     speed_wpm,
     loudness,
     pause_durations_s,
-    emphasized_words,
     tone_score,
     filler_words,
-    repetition_data,
   } = speechData;
 
   // Calculate pause statistics

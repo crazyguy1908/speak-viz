@@ -10,7 +10,8 @@ import pyloudnorm as pyln
 from transformers import AutoFeatureExtractor, AutoModelForAudioClassification
 import torch
 import torchaudio
-from dotenv import load_dotenv, dotenv_values 
+from dotenv import load_dotenv, dotenv_values
+
 # loading variables from .env file
 load_dotenv() 
 
@@ -91,67 +92,52 @@ class VoiceAnalyzer:
 
     def detect_filler_words(self, words, transcript):
         """Detect common filler words in the transcript."""
-        filler_words = {
-            'um', 'uh', 'er', 'ah', 'hmm', 'huh', 'like', 'you know', 'basically', 
-            'actually', 'literally', 'sort of', 'kind of', 'right', 'okay', 'so',
-            'well', 'i mean', 'you see', 'i guess', 'i think', 'i suppose',
-            'i believe', 'i feel', 'i would say', 'i would think'
+        # Separate single and multi-word fillers
+        single_word_fillers = {
+            'um', 'uh', 'er', 'ah', 'hmm', 'huh', 'like', 'basically', 
+            'actually', 'literally', 'right', 'okay', 'so', 'well'
         }
         
-        # Convert transcript to lowercase for matching
-        transcript_lower = transcript.lower()
+        multi_word_fillers = {
+            'you know', 'sort of', 'kind of', 'i mean', 'you see', 
+            'i guess', 'i think', 'i suppose', 'i believe', 'i feel', 
+            'i would say', 'i would think'
+        }
+        
         found_fillers = []
         
-        # Check for single-word fillers
-        for word in words:
-            word_text = word['word'].lower().strip('.,!?;:')
-            if word_text in filler_words:
-                found_fillers.append(word_text)
+        # Method 1: Check individual words from Whisper timestamps
+        for word_obj in words:
+            if 'word' in word_obj:
+                # Clean the word more thoroughly
+                clean_word = word_obj['word'].strip().lower()
+                # Remove common punctuation
+                clean_word = clean_word.strip('.,!?;:"()[]{}')
+                
+                if clean_word in single_word_fillers:
+                    found_fillers.append(clean_word)
         
-        # Check for multi-word fillers
-        for filler in filler_words:
-            if ' ' in filler and filler in transcript_lower:
-                # Count occurrences of multi-word fillers
-                count = transcript_lower.count(filler)
+        # Method 2: Use transcript text for multi-word fillers
+        transcript_lower = transcript.lower()
+        for filler in multi_word_fillers:
+            count = transcript_lower.count(filler)
+            if count > 0:
                 found_fillers.extend([filler] * count)
+        
+        # Method 3: Fallback - split transcript and check each word
+        # This catches cases where Whisper word timestamps might miss something
+        transcript_words = transcript.lower().split()
+        for word in transcript_words:
+            clean_word = word.strip('.,!?;:"()[]{}')
+            if clean_word in single_word_fillers:
+                # Only add if not already found (to avoid duplicates)
+                if clean_word not in [f for f in found_fillers if ' ' not in f]:
+                    found_fillers.append(clean_word)
         
         print(f"Found {len(found_fillers)} filler words: {found_fillers}")
         return found_fillers
 
-    def detect_repetitions(self, words, transcript):
-        """Detect repeated words and phrases in the transcript."""
-        # Extract word list from words with timing
-        word_list = [word['word'].lower().strip('.,!?;:') for word in words]
-        
-        # Filter out very short words and common words
-        common_words = {'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'is', 'are', 'was', 'were', 'be', 'been', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could', 'should', 'may', 'might', 'can', 'this', 'that', 'these', 'those', 'i', 'you', 'he', 'she', 'it', 'we', 'they', 'me', 'him', 'her', 'us', 'them', 'my', 'your', 'his', 'her', 'its', 'our', 'their'}
-        
-        # Count word frequencies
-        word_counts = {}
-        for word in word_list:
-            if len(word) > 2 and word not in common_words:
-                word_counts[word] = word_counts.get(word, 0) + 1
-        
-        # Find repeated words (appearing more than once)
-        repeated_words = {word: count for word, count in word_counts.items() if count > 1}
-        
-        # Calculate repetition percentage
-        total_words = len(word_list)
-        repeated_word_count = sum(repeated_words.values()) - len(repeated_words)  # Subtract one occurrence of each word
-        repetition_percentage = (repeated_word_count / total_words * 100) if total_words > 0 else 0
-        
-        # Find most repeated words
-        top_repetitions = sorted(repeated_words.items(), key=lambda x: x[1], reverse=True)[:5]
-        
-        print(f"Repetition percentage: {repetition_percentage:.1f}%")
-        print(f"Top repeated words: {top_repetitions}")
-        
-        return {
-            'percentage': repetition_percentage,
-            'repeated_words': repeated_words,
-            'top_repetitions': top_repetitions,
-            'total_repeated_instances': repeated_word_count
-        }
+   
 
     def _cleanup_files(self, *files):
         """Clean up temporary and processed audio files."""

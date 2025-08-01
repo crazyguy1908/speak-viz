@@ -199,7 +199,7 @@ function Recorder({ user }) {
               const gaze = FaceAnalysisMetrics.gazeDirection(gestures);
 
               const inEyeContact =
-                gaze.some((o) => o.gesture === "looking center") &&
+                gaze.some((o) => o.gesture === "looking center" || "looking up") &&
                 gaze.some((o) => o.gesture === "facing center");
 
               const { yaw, pitch, gazeBearing } =
