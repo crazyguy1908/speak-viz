@@ -11,7 +11,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import "./recorder.css";
 import AnalysisResults from "./AnalysisResult";
 
-const API_URL = "http://speakviz.ddns.net:8089/analyze";
+const API_URL = "api.speakviz.net:8089/analyze";
 
 function Recorder({ user }) {
   const [idleStream, setIdleStream] = useState(null);
@@ -52,6 +52,13 @@ function Recorder({ user }) {
   const resetMetrics = () => {
     metrics.current.frames = 0;
     metrics.current.eyeContactFrames = 0;
+    metrics.current.yawHistory = [];
+    metrics.current.pitchHistory = [];
+    metrics.current.gazeHistory = [];
+    metrics.current.eyeContactSegments = [];
+    metrics.current.yawSum = 0;
+    metrics.current.yawSq = 0;
+    metrics.current.movePx = 0;
   };
 
   const VideoPreview = ({ stream, className, detect, showOverlay }) => {
@@ -91,29 +98,22 @@ function Recorder({ user }) {
 
       const loadHuman = async () => {
         try {
-          console.log("Loading Human library...");
           const { default: Human } = await import("@vladmandic/human");
 
           const h = new Human(humanConfig);
 
-          console.log("Loading face models only...");
           await h.load();
 
           if (h.tf) {
             await h.tf.setBackend("webgl");
             await h.tf.ready();
-            console.log("TensorFlow backend ready:", h.tf.getBackend());
           }
 
-          // Warmup for better performance
-          console.log("Warming up...");
           await h.warmup();
 
           if (!cancelled) {
             setHuman(h);
             setModelsLoaded(true);
-            console.log("🧑‍🚀 Human ready - Face detection only");
-            console.log("Models loaded:", h.models.loaded());
           }
         } catch (err) {
           console.error("Failed to load Human library:", err);
@@ -205,62 +205,6 @@ function Recorder({ user }) {
               );
             }
 
-            /* if (faces.length) {
-              const rot = faces[0].rotation;
-              const angle = rot.angle;
-              const gaze = rot.gaze;
-
-              console.log(
-                'pitch', angle.pitch,
-                'yaw', angle.yaw,
-                'roll', angle.roll,
-                'gaze', gaze.bearing
-              );
-            } */
-
-            /* const irisEntries = gestures.filter(o => Object.hasOwn(o, 'iris')); 
-            const eyeContact = [];
-            const haveBothCenters =  
-              irisEntries.some(o => o.gesture === 'looking center') &&
-              irisEntries.some(o => o.gesture === 'facing center');
-            if (haveBothCenters) {
-              console.log("eye contact")
-            } */
-
-            // Process face data for metrics
-            /* if (human.result && human.result.face && human.result.face.length > 0) {
-              const f = human.result.face[0];
-              const box = f.box;
-              const [pitch, yaw] = f.rotation || [0, 0];
-              const leftIris = f.iris?.left || [0, 0];
-              const rightIris = f.iris?.right || [0, 0];
-
-              // Calculate gaze
-              const pupil = {
-                x: (leftIris[0] + rightIris[0]) * 0.5,
-                y: (leftIris[1] + rightIris[1]) * 0.5
-              };
-              const nx = box[2] > 0 ? (pupil.x - box[0]) / box[2] : 0.5;
-              const ny = box[3] > 0 ? (pupil.y - box[1]) / box[3] : 0.5;
-
-              let gaze = 'STRAIGHT';
-              if (ny < 0.30) gaze = 'UP';
-              else if (nx < 0.38) gaze = 'RIGHT';
-              else if (nx > 0.62) gaze = 'LEFT';
-
-              const inEyeContact = gaze === 'STRAIGHT' && Math.abs(yaw) < 0.30;
-
-              // Update metrics
-              metrics.current.frames += 1;
-              if (inEyeContact) metrics.current.eyeContactFrames += 1;
-
-              if (FaceAnalysisMetrics.updateOrientationMetrics) {
-                FaceAnalysisMetrics.updateOrientationMetrics(
-                  yaw, pitch, inEyeContact,
-                  metrics, metrics.current.frames
-                );
-              }
-            } */
           } catch (error) {
             console.error("Detection error:", error);
           }
@@ -319,7 +263,7 @@ function Recorder({ user }) {
             if (showOverlay) {
               await human.draw.all(canvas, interpolated, drawOptions);
             } else {
-              ctx.clearRect(0, 0, canvas.width, canvas.height); // keep canvas invisible
+              ctx.clearRect(0, 0, canvas.width, canvas.height); 
             }
           } catch (error) {
             console.error("Draw error:", error);
@@ -327,7 +271,7 @@ function Recorder({ user }) {
         }
 
         if (drawLoopRef.current) {
-          setTimeout(drawLoop, 33); // roughly 30fps
+          setTimeout(drawLoop, 33); 
         }
       };
 
@@ -371,12 +315,12 @@ function Recorder({ user }) {
           }}
         />
         {error && (
-          <div style={{ color: "red", fontSize: "12px", marginTop: "5px" }}>
+          <div className="svz-error-loading-text">
             Face detection error: {error}
           </div>
         )}
         {!modelsLoaded && !error && (
-          <div style={{ color: "yellow", fontSize: "12px", marginTop: "5px" }}>
+          <div className="svz-loading-text">
             Loading face detection models...
           </div>
         )}
@@ -474,7 +418,6 @@ function Recorder({ user }) {
       const fileName = `video-${timestamp}.webm`;
       const filePath = `${user.id}/${fileName}`;
 
-      // Supabase upload code (commented out as in original)
 
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from("videos")
@@ -607,6 +550,7 @@ function Recorder({ user }) {
                           type="checkbox"
                           checked={showOverlay}
                           onChange={(e) => setShowOverlay(e.target.checked)}
+                          disabled={status === "recording"}
                         />
                         <span>Show Overlay</span>
                       </label>

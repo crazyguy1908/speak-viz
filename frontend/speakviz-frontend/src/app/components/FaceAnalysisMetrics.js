@@ -360,7 +360,7 @@ export default function FaceMetricVisualizations({ metrics }) {
                 options={{
                   responsive: true,
                   maintainAspectRatio: false,
-                  animation: false, // Disable animations for better performance
+                  animation: true, 
                   plugins: {
                     zoom: {
                       zoom: {
