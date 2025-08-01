@@ -13,10 +13,8 @@ export default function SpeechMetrics({ speechData, isStopped = false }) {
     emphasized_words,
     tone_score,
     filler_words,
-    repetition_data
   } = speechData;
 
-  // Calculate pause statistics
   const totalPauses = pause_durations_s ? pause_durations_s.length : 0;
   const averagePauseDuration = pause_durations_s && pause_durations_s.length > 0 
     ? (pause_durations_s.reduce((a, b) => a + b, 0) / pause_durations_s.length).toFixed(2)
@@ -111,24 +109,7 @@ export default function SpeechMetrics({ speechData, isStopped = false }) {
           </div>
         </div>
 
-        {/* Emphasized Words Card */}
-        <div className="svz-metric-card">
-          <div className="svz-metric-icon" style={{ backgroundColor: '#8b5cf620' }}>
-            <span className="svz-metric-icon-text">💬</span>
-          </div>
-          <div className="svz-metric-content">
-            <div className="svz-metric-label">Emphasized Words</div>
-            <div className="svz-metric-value">{emphasized_words ? emphasized_words.length : 0}</div>
-            <div className="svz-metric-details">
-              {emphasized_words && emphasized_words.length > 0 
-                ? emphasized_words.slice(0, 3).join(', ') + (emphasized_words.length > 3 ? '...' : '')
-                : 'None detected'
-              }
-            </div>
-          </div>
-        </div>
 
-        {/* Emotion Card */}
         <div className="svz-metric-card">
           <div className="svz-metric-icon" style={{ backgroundColor: '#ec489920' }}>
             <span className="svz-metric-icon-text">😊</span>
@@ -197,26 +178,6 @@ export default function SpeechMetrics({ speechData, isStopped = false }) {
         </div>
 
         {/* Repetition Card */}
-        <div className="svz-metric-card">
-          <div className="svz-metric-icon" style={{ backgroundColor: '#8b5cf620' }}>
-            <span className="svz-metric-icon-text">🔄</span>
-          </div>
-          <div className="svz-metric-content">
-            <div className="svz-metric-label">Repetition</div>
-            <div className="svz-metric-value">
-              {repetition_data ? `${repetition_data.percentage.toFixed(1)}%` : 'N/A'}
-            </div>
-            <div className="svz-metric-details">
-              {repetition_data && repetition_data.top_repetitions.length > 0 
-                ? repetition_data.top_repetitions.slice(0, 2).map(([word, count]) => `${word} (${count})`).join(', ')
-                : 'No repetitions'
-              }
-            </div>
-            <div className="svz-metric-level" style={{ color: repetition_data && repetition_data.percentage > 15 ? '#ef4444' : repetition_data && repetition_data.percentage > 8 ? '#f59e0b' : '#10b981' }}>
-              {repetition_data && repetition_data.percentage > 15 ? 'High Repetition' : repetition_data && repetition_data.percentage > 8 ? 'Moderate' : 'Good Variety'}
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );
