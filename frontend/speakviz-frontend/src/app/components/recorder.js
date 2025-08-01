@@ -11,7 +11,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import "./recorder.css";
 import AnalysisResults from "./AnalysisResult";
 
-const API_URL = "api.speakviz.net:8089/analyze";
+const API_URL = "api.speakviz.net/analyze";
 
 function Recorder({ user }) {
   const [idleStream, setIdleStream] = useState(null);
@@ -204,7 +204,6 @@ function Recorder({ user }) {
                 metrics.current.frames
               );
             }
-
           } catch (error) {
             console.error("Detection error:", error);
           }
@@ -263,7 +262,7 @@ function Recorder({ user }) {
             if (showOverlay) {
               await human.draw.all(canvas, interpolated, drawOptions);
             } else {
-              ctx.clearRect(0, 0, canvas.width, canvas.height); 
+              ctx.clearRect(0, 0, canvas.width, canvas.height);
             }
           } catch (error) {
             console.error("Draw error:", error);
@@ -271,7 +270,7 @@ function Recorder({ user }) {
         }
 
         if (drawLoopRef.current) {
-          setTimeout(drawLoop, 33); 
+          setTimeout(drawLoop, 33);
         }
       };
 
@@ -417,7 +416,6 @@ function Recorder({ user }) {
       const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
       const fileName = `video-${timestamp}.webm`;
       const filePath = `${user.id}/${fileName}`;
-
 
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from("videos")
