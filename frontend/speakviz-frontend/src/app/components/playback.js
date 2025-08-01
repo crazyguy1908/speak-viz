@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import FeedbackModal from "./FeedbackModal";
+import { Plus } from "lucide-react";
 import "./playback.css";
 
 export default function MyVideosPage() {
@@ -125,12 +126,18 @@ export default function MyVideosPage() {
         <p className="svz-playback-msg svz-playback-msg-empty">
           You haven't uploaded any videos yet.
         </p>
-        <Button 
+        <p className="svz-playback-msg svz-playback-msg-empty">
+          Use the + button to start your first recording.
+        </p>
+        
+        {/* Floating Action Button */}
+        <button
           onClick={() => router.push("/recorder")}
-          className="svz-playback-new-recording-btn"
+          className="svz-playback-fab"
+          aria-label="New Recording"
         >
-          Start Your First Recording
-        </Button>
+          <Plus className="svz-playback-fab-icon" />
+        </button>
       </div>
     );
 
@@ -138,12 +145,6 @@ export default function MyVideosPage() {
     <div className="svz-playback-root">
       <div className="svz-playback-header">
         <h1 className="svz-playback-title">My Videos</h1>
-        <Button 
-          onClick={() => router.push("/recorder")}
-          className="svz-playback-new-recording-btn"
-        >
-          New Recording
-        </Button>
       </div>
       <div className="svz-playback-grid">
         {videos.map((vid) => (
@@ -201,6 +202,15 @@ export default function MyVideosPage() {
         onClose={closeModal}
         videoData={selectedVideo}
       />
+      
+      {/* Floating Action Button */}
+      <button
+        onClick={() => router.push("/recorder")}
+        className="svz-playback-fab"
+        aria-label="New Recording"
+      >
+        <Plus className="svz-playback-fab-icon" />
+      </button>
     </div>
   );
 }

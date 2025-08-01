@@ -91,7 +91,7 @@ export default function FeedbackModal({ isOpen, onClose, videoData }) {
                 <div className="svz-feedback-points-sidebar">
                   {currentPoints.map((point) => (
                     <button
-                      key={point.number}
+                      key={`${selectedSection}-${point.number}`}
                       className={`svz-feedback-point-btn ${
                         selectedPoint === parseInt(point.number) ? "active" : ""
                       }`}

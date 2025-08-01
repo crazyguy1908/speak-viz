@@ -1,17 +1,10 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import dynamic from "next/dynamic";
-import { supabase } from "../../supabaseClient";
+import { supabase } from "@/supabaseClient";
 import Navbar from "../components/navbar";
 
-// Dynamically import Recorder component with no SSR
-const Recorder = dynamic(() => import("../components/recorder"), {
-  ssr: false,
-  loading: () => <div className="text-center">Loading recorder...</div>,
-});
-
-export default function RecorderPage() {
+export default function ContactsPage() {
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
@@ -20,6 +13,7 @@ export default function RecorderPage() {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setLoading(false);
+
       if (!session) {
         router.push("/");
       }
@@ -42,12 +36,26 @@ export default function RecorderPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
-      <div className="container mx-auto px-4 py-8 pt-20">
-        <Navbar />
-        <div className="flex flex-col items-center justify-center">
-          <Recorder user={session.user} />
+      <Navbar />
+      <div className="container mx-auto px-4 py-12 pt-20 flex flex-col items-center justify-center min-h-screen">
+        <div className="text-center max-w-2xl mx-auto">
+          <h1 className="text-4xl font-bold mb-8 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            Contact Us
+          </h1>
+          <p className="text-xl text-gray-700 mb-4">
+            Have questions or need support?
+          </p>
+          <p className="text-lg text-gray-600">
+            Please email us at{" "}
+            <a 
+              href="mailto:contact@speakviz.net" 
+              className="text-blue-600 hover:text-blue-800 font-semibold underline"
+            >
+              contact@speakviz.net
+            </a>
+          </p>
         </div>
       </div>
     </div>
   );
-}
+} 

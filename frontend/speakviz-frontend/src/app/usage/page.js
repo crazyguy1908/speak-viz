@@ -37,8 +37,10 @@ export default function UsagePage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
-      <Navbar />
-      <Usage />
+      <div className="container mx-auto px-4 py-8 pt-20">
+        <Navbar />
+        <Usage />
+      </div>
     </div>
   );
 }

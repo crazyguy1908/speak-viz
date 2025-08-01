@@ -2,7 +2,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../supabaseClient";
-import { User, LogOut, BarChart3, ChevronDown } from "lucide-react";
+import { User, LogOut, BarChart3, ChevronDown, Mail } from "lucide-react";
 import "./ProfileDropdown.css";
 
 export default function ProfileDropdown() {
@@ -39,6 +39,11 @@ export default function ProfileDropdown() {
 
   const handleUsageClick = () => {
     router.push("/usage");
+    setIsOpen(false);
+  };
+
+  const handleContactsClick = () => {
+    router.push("/contacts");
     setIsOpen(false);
   };
 
@@ -84,6 +89,14 @@ export default function ProfileDropdown() {
             >
               <BarChart3 className="svz-profile-menu-icon" />
               <span>Usage & Limits</span>
+            </button>
+            
+            <button
+              className="svz-profile-menu-item"
+              onClick={handleContactsClick}
+            >
+              <Mail className="svz-profile-menu-icon" />
+              <span>Contact Us</span>
             </button>
             
             <button

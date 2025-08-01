@@ -35,8 +35,8 @@ export default function playbackPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
-      <Navbar />
-      <div className="container mx-auto px-4 py-12 flex flex-col items-center justify-center">
+      <div className="container mx-auto px-4 py-8 pt-20">
+        <Navbar />
         <MyVideosPage user={session.user} />
       </div>
     </div>
