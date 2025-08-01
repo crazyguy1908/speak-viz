@@ -329,7 +329,7 @@ export default function SpeakVizLanding() {
             </p>
 
             <p className="svz-home-cta-footnote">
-              ✓ No hidden fees ✓ Cancel anytime ✓ Full support included
+              ✓ No hidden fees ✓ Cancel at anytime ✓ Full support included
             </p>
           </div>
         </div>
