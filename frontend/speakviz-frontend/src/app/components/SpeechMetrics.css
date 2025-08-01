@@ -100,7 +100,6 @@
   letter-spacing: 0.05em;
 }
 
-/* Compact styles for stopped state */
 .svz-speech-metrics-container.stopped {
   margin: 0;
   padding: 1rem;
@@ -153,7 +152,6 @@
   font-size: 0.7rem;
 }
 
-/* Responsive design */
 @media (max-width: 1024px) {
   .svz-speech-metrics-grid {
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));

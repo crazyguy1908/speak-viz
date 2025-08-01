@@ -31,6 +31,7 @@ function Recorder({ user }) {
   const [analysisData, setAnalysisData] = useState(null);
   const [showOverlay, setShowOverlay] = useState(false);
 
+
   const metrics = useRef({
     frames: 0,
     eyeContactFrames: 0,
@@ -357,6 +358,12 @@ function Recorder({ user }) {
     analyzeAndUploadVideo(blob, blobUrl, user, faceAnalysis);
   };
 
+  const setMetricsFPS = (durationSec) => {
+  if (durationSec && metrics.current.frames > 0) {
+    metrics.current.fps = metrics.current.frames / durationSec;
+  }
+  };
+
   useEffect(() => {
     navigator.mediaDevices
       .getUserMedia({ video: true })
@@ -460,6 +467,7 @@ function Recorder({ user }) {
       console.log("File uploaded successfully:", uploadData);
 
       const videoDuration = await getVideoDuration(blobUrl);
+      setMetricsFPS(videoDuration);
 
       const parsedRecommendations = parseRecommendations(
         analysisData.recommendations

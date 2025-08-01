@@ -30,6 +30,9 @@ ChartJS.register(
   Title
 );
 
+export const frameToTime = (frame, fps) => 
+(frame / fps).toFixed(2);
+
 export function gazeDirection(gestures) {
   const irisEntries = gestures.filter((o) => Object.hasOwn(o, "iris"));
   return irisEntries;
@@ -282,6 +285,9 @@ function classifySegment(segment, yawSpread, pitchSpread) {
 }
 
 export default function FaceMetricVisualizations({ metrics }) {
+
+  const fps = metrics.current.fps ?? 30;
+
   const [selectedChart, setSelectedChart] = useState("line");
   const [hoveredSegment, setHoveredSegment] = useState(null);
   const lineChartRef = useRef(null);
@@ -319,11 +325,11 @@ export default function FaceMetricVisualizations({ metrics }) {
     totalFrames,
   } = stats;
 
-  // Enhanced segment annotations with classification - Fixed hover logic
   const segmentAnnotations = eyeContactSegments.reduce((obj, seg, i) => {
     const classification = classifySegment(seg, yawSpread, pitchSpread);
     const lines = [
       `Frames: ${seg.start} – ${seg.end}`,
+      `Time: ${frameToTime(seg.start, fps)} – ${frameToTime(seg.end, fps)} s`,
       `Eye Contact: ${(seg.eyeContactRatio * 100).toFixed(0)}%`,
       `Classification: ${classification}`,
     ];
