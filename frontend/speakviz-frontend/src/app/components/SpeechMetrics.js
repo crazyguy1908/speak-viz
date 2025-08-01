@@ -221,48 +221,6 @@ export default function SpeechMetrics({ speechData, isStopped = false }) {
             </div>
           </div>
         </div>
-
-        <div className="svz-metric-card">
-          <div
-            className="svz-metric-icon"
-            style={{ backgroundColor: "#8b5cf620" }}
-          >
-            <span className="svz-metric-icon-text">🔄</span>
-          </div>
-          <div className="svz-metric-content">
-            <div className="svz-metric-label">Repetition</div>
-            <div className="svz-metric-value">
-              {repetition_data
-                ? `${repetition_data.percentage.toFixed(1)}%`
-                : "N/A"}
-            </div>
-            <div className="svz-metric-details">
-              {repetition_data && repetition_data.top_repetitions.length > 0
-                ? repetition_data.top_repetitions
-                    .slice(0, 2)
-                    .map(([word, count]) => `${word} (${count})`)
-                    .join(", ")
-                : "No repetitions"}
-            </div>
-            <div
-              className="svz-metric-level"
-              style={{
-                color:
-                  repetition_data && repetition_data.percentage > 15
-                    ? "#ef4444"
-                    : repetition_data && repetition_data.percentage > 8
-                    ? "#f59e0b"
-                    : "#10b981",
-              }}
-            >
-              {repetition_data && repetition_data.percentage > 15
-                ? "High Repetition"
-                : repetition_data && repetition_data.percentage > 8
-                ? "Moderate"
-                : "Good Variety"}
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );
