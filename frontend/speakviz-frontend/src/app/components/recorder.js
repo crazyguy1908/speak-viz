@@ -57,8 +57,6 @@ function Recorder({ user }) {
     { value: "debate", label: "Debate/Discussion" },
   ];
 
-
-
   const resetMetrics = () => {
     metrics.current.frames = 0;
     metrics.current.eyeContactFrames = 0;
@@ -69,7 +67,11 @@ function Recorder({ user }) {
     metrics.current.yawSum = 0;
     metrics.current.yawSq = 0;
     metrics.current.movePx = 0;
-    metrics.current.currentSegment = { start: 0, eyeContactFrames: 0, totalFrames: 0 }
+    metrics.current.currentSegment = {
+      start: 0,
+      eyeContactFrames: 0,
+      totalFrames: 0,
+    };
   };
 
   const VideoPreview = ({ stream, className, detect, showOverlay }) => {
@@ -340,7 +342,6 @@ function Recorder({ user }) {
 
   const handleDownload = (blobUrl, blob) => {
     const fileName = `speakviz-recording-${Date.now()}.webm`;
-
     const link = document.createElement("a");
     link.href = blobUrl;
     link.download = fileName;
@@ -376,7 +377,9 @@ function Recorder({ user }) {
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [error, setError] = useState(null);
   const [showWaitingAnimation, setShowWaitingAnimation] = useState(false);
-  const [waitingMessage, setWaitingMessage] = useState("Analyzing your recording and generating feedback...");
+  const [waitingMessage, setWaitingMessage] = useState(
+    "Analyzing your recording and generating feedback..."
+  );
 
   const getVideoDuration = (url) => {
     return new Promise((resolve) => {
@@ -506,8 +509,8 @@ function Recorder({ user }) {
 
   return (
     <>
-      <WaitingAnimation 
-        isVisible={showWaitingAnimation} 
+      <WaitingAnimation
+        isVisible={showWaitingAnimation}
         message={waitingMessage}
       />
       <div className="svz-recorder-root">
@@ -535,9 +538,7 @@ function Recorder({ user }) {
                     <div className="svz-recorder-main">
                       <h1 className="svz-recorder-status">{status}</h1>
                       <div className="svz-recorder-title">
-                        <label htmlFor="title-input">
-                          Recording Title:{" "}
-                        </label>
+                        <label htmlFor="title-input">Recording Title: </label>
                         <input
                           id="title-input"
                           type="text"
@@ -603,7 +604,6 @@ function Recorder({ user }) {
                           Stop Recording
                         </button>
                       </div>
-                      
 
                       <label>
                         <input
@@ -628,8 +628,6 @@ function Recorder({ user }) {
           </div>
         </div>
       </div>
-      
-
     </>
   );
 }
