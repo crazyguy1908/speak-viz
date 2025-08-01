@@ -143,11 +143,11 @@ export default function SpeakVizLanding() {
         <div className="svz-home-hero-img-wrap">
           <div className="svz-home-hero-img-border">
             <div className="svz-home-hero-img-inner">
-              <Image
-                src="/placeholder.svg?height=400&width=800"
+              <img
+                src="/dashboard_picture.png"
                 alt="SpeakViz Dashboard Preview"
-                width={800}
-                height={400}
+                width={813}
+                height={464}
                 className="svz-home-hero-img"
               />
             </div>
@@ -264,11 +264,11 @@ export default function SpeakVizLanding() {
           </div>
 
           <div className="svz-home-benefits-img-wrap">
-            <Image
-              src="/placeholder.svg?height=500&width=600"
+            <img
+              src="/other_image.png"
               alt="Speech therapist using SpeakViz with client"
-              width={600}
-              height={500}
+              width={750}
+              height={383}
               className="svz-home-benefits-img"
             />
           </div>
