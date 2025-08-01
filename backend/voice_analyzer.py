@@ -10,10 +10,9 @@ import pyloudnorm as pyln
 from transformers import AutoFeatureExtractor, AutoModelForAudioClassification
 import torch
 import torchaudio
-<<<<<<< HEAD
 
-=======
->>>>>>> parent of befd3cf (Added Speech ANalysis Graph)
+
+
 class VoiceAnalyzer:
     def __init__(self, sample_rate=16000, channels=1):
         self.sample_rate = sample_rate
@@ -270,10 +269,6 @@ class VoiceAnalyzer:
                 'pitch_stats': pitch_stats,
                 'emphasized_words': emphasized_words,
                 'filler_words': filler_words,
-<<<<<<< HEAD
-=======
-                'repetition_data': repetition_data
->>>>>>> parent of befd3cf (Added Speech ANalysis Graph)
             }
             return analysis
             
